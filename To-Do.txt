@@ -1,0 +1,17 @@
+To-Do List:
+-Welk data format willen we gebruiken? (Log-file, welke data zit erin/moet erin?
+-Welke vragen willen we beantwoorden met de data?
+-Welke kleine variaties willen we meten (om de vragen te beantwoorden)
+-Op welke manier willen we de data representeren? (Welke data is niet nodig)
+
+Questions:
+-Does a request always follow one way or does a response go back to a server and the server does a request to another server? (Company)
+-For Data Generation: How can we draw conclusions about the data generation? (Ex. how many layers a process can have (realistically))
+-
+
+Random thoughts (Yoav):
+-Depth, vertakking, hoeveel servers die hetzelfde doen, wat is de variatie in tijd tussen servers die precies hetzelfde doen 
+-Data generatie: maak een heel netwerk waardoor random generatie logs van maakt
+--class Server die eigenschappen server aanmaakt. Een server object splitsen om identieke servers te maken.
+
+
