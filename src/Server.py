@@ -2,10 +2,13 @@
 
 import random
 class Server:
-    def __init__(self, name, timestamp, response):
-        self.name = name
-        self.response = response
-        self.timestamp = self.retime(timestamp)
+    def __init__(self, name, response, timestamp, pred, dup):
+        self.name = name  #name of server (S1): string
+        self.response = response  #is the process passing a request or response: boolean
+        self.timestamp = self.retime(timestamp)  #request or response time: int
+        self.pred = pred  #predecessor(s) of current node: [Server]
+        self.dup = dup  #duplicates of the current server: [Server]
+
 
     def retime(self, timestamp):
         """Correct timestamp based on request or response status """
