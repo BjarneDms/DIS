@@ -10,6 +10,9 @@ class Server:
         self.suc = suc
         self.dup = dup  #duplicates of the current server: [Server]
 
+    def set_suc(self, value):
+        self.suc = value
+
     def __repr__(self):
         return f"Server(name='{self.name}', response={self.response}, timestamp={self.timestamp}, pred={[self.pred]}, suc={[self.suc]}, dup={[self.dup]})"
 
