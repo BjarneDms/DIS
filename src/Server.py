@@ -2,19 +2,20 @@
 
 import random
 class Server:
-    def __init__(self, name, response=None, timestamp=None, pred=None, suc=None, dup=None):
-        self.name = name  #name of server (S1): string
-        self.response = response  #is the process passing a request or response: boolean
-        self.timestamp = timestamp #self.retime(timestamp)  #request or response time: int
-        self.pred = pred  #predecessor(s) of current node: [Server]
-        self.suc = suc
-        self.dup = dup  #duplicates of the current server: [Server]
+    def __init__(self, name, response=None, response_time=None, request_time=None, pred=None, suc=None, dup=None):
+        self.name = name                                        # name of server (S1): string
+        self.response = response                                # is the process passing a request or response: boolean
+        self.response_time = response_time                      #
+        self.request_time = request_time                        #
+        self.pred = pred                                        # predecessor(s) of current node: [Server]
+        self.suc = suc                                          #
+        self.dup = dup                                         # duplicates of the current server: [Server]
 
     def set_suc(self, value):
         self.suc = value
 
     def __repr__(self):
-        return f"Server(name='{self.name}', response={self.response}, timestamp={self.timestamp}, pred={[self.pred]}, suc={[self.suc]}, dup={[self.dup]})"
+        return f"Server(name='{self.name}', response={self.response}, response_time={self.response_time}, request_time={self.request_time}, pred={[self.pred]}, suc={[self.suc]}, dup={[self.dup]})"
 
 
 """
