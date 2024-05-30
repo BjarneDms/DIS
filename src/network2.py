@@ -14,11 +14,11 @@ mean = 50                                       # Mean for timestamp generation
 std_dev = 20                                    # Std_deviation for timestamp generation
 network = []                                    # List of all the servers
 stop_condition = [i for i in range(1, 3)]       # How big the chance is that a node is the end node
-initial_branching = 4                          # How many options the user has (how many server paths exist)
+initial_branching = 4                           # How many options the user has (how many server paths exist)
 amount_of_dup = [2, 3, 4]                       # How many duplicates can exist
 amount_of_sisters = [2, 3]                      # How many sister nodes can exist
-chance_dup_nodes = [1, 2, 3, 4, 5, 6, 7]              # The chance of getting duplicate nodes
-chance_sisters_nodes = [1, 2, 3, 4, 5, 6, 7]          # The chance of getting sister nodes
+chance_dup_nodes = [1, 2, 3, 4, 5, 6, 7]        # The chance of getting duplicate nodes
+chance_sisters_nodes = [1, 2, 3, 4, 5, 6, 7]    # The chance of getting sister nodes
 chance_random_link = [1]                        # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
@@ -183,7 +183,7 @@ while len(to_append_nodes) != 0:
                     predecessors.append(node_to_go.name)
                 else:
                     predecessors = [predecessors, node_to_go.name]
-                successor_update(node_to_go, network[len(network) - 1].name + 100)
+                successor_update(node_to_go, network[len(network) - 1].name)
                 node = network[len(network) - 1]
                 network.pop()
                 node.pred = predecessors
