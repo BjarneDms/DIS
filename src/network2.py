@@ -228,6 +228,7 @@ def visualisation(network_list):
 visualisation(network)
 
 # ----------------------------------------------------------------------------------------------------------------------
+final_log = []
 for j in range(amount_of_logs):                      # Log generation
     route = []
     route.append(root.copy())
@@ -268,6 +269,12 @@ for j in range(amount_of_logs):                      # Log generation
         log.append((route[i].name, route[i-1].name, round(base_time+route[i].response_time, ndigits=2), "Response", j))
         base_time = base_time+route[i].response_time
 
+    final_log.append(log)
+
+final_log = sorted(final_log, key=lambda x: x[0][2])
+for log in final_log:
     print()
-    for l in log:
-        print(l)
+    for details in log:
+        print(details)
+
+
