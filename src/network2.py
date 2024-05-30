@@ -78,13 +78,15 @@ for server in network:
 
 def visualisation(network):
     G = nx.DiGraph()
+    color_map = []
     for nodes in network:
-        print(nodes.dup)
         if nodes.dup is not None:
-            print("hhhaaallooooo")
-            G.add_node(nodes.name, color="red")
+            G.add_node(nodes.name)
+            color_map.append('orchid')
         else:
-            G.add_node(nodes.name, color="skyblue")
+            G.add_node(nodes.name)
+            color_map.append('c')
+    color_map.append('blue')
     for nodes in network:
         if type(nodes.pred) is not int:
             for pred in nodes.pred:
@@ -93,7 +95,7 @@ def visualisation(network):
             G.add_edge(nodes.name, nodes.pred)
 
     pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
-    nx.draw(G, pos, with_labels=True, node_size=1000, edge_color='gray',
+    nx.draw(G, pos, with_labels=True, node_color=color_map, node_size=1000, edge_color='gray',
             font_size=15, font_color='black', font_weight='bold', linewidths=2, edgecolors='black')
     plt.show()
 
