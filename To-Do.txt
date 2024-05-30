@@ -14,4 +14,27 @@ Random thoughts (Yoav):
 -Data generatie: maak een heel netwerk waardoor random generatie logs van maakt
 --class Server die eigenschappen server aanmaakt. Een server object splitsen om identieke servers te maken.
 
+Hash Function:
+" First group on ID"
+
+Tijd:
+- Totale tijd (met intervals van bv 50 ms)
+- Variance verschil in timestamps
+	* calculate mean
+	* subtract mean from each data point
+	* square the difference	
+	* sum the squares
+	* divide by number of data points
+- Ratio korte/lange tijden (request & response)
+	* kies een tijdsgrens voor categorie
+	* tel het aantal korte & lange requests
+	* subtract deze nummers voor de bucket (bv)
+- Groeperen op basis van request & response, daarna kijken naar de tijden (mean & variance)
+
+Server:
+- Op basis van server volgorde processes vergelijken en sorteren op commonality
+	* cosine similarity
+	* kies een hash function die transitive is
+	* zoek naar server die het vaakst voorkomt in een bucket met processen, en splits de 		  bucket op basis van welke processen deze server bevatten
+
 
