@@ -271,10 +271,18 @@ for j in range(amount_of_logs):                      # Log generation
 
     final_log.append(log)
 
-final_log = sorted(final_log, key=lambda x: x[0][2])
+final_sorted_log = []
 for log in final_log:
+    for details in log:
+        final_sorted_log.append(details)
+
+final_sorted_log = sorted(final_sorted_log, key=lambda x: x[2])
+
+print()
+for log in final_sorted_log:
+    print(log)
+
+for log in final_log:                           # niet nodig uiteindelijk
     print()
     for details in log:
         print(details)
-
-
