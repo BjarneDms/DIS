@@ -4,6 +4,7 @@ import pygraphviz
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 # ----------------------------------------------------------------------------------------------------------------------
 branching_factor = [1, 2, 3]                    # Branching factor is averagely 2
@@ -11,9 +12,11 @@ to_append_nodes = []                            # List of nodes that still need 
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
 mean = 50                                       # Mean for timestamp generation
+mean_start_node = 1000
 std_dev = 20                                    # Std_deviation for timestamp generation
+std_dev_start_node = 300
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 3)]       # How big the chance is that a node is the end node
+stop_condition = [i for i in range(1, 5)]       # How big the chance is that a node is the end node
 initial_branching = 4                           # How many options the user has (how many server paths exist)
 amount_of_dup = [2, 3, 4]                       # How many duplicates can exist
 amount_of_sisters = [2, 3]                      # How many sister nodes can exist
@@ -24,6 +27,7 @@ dup_nodes_names = []                            # List we need to update the pre
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
+stop_log = [i for i in range(1, 4)]
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -223,4 +227,46 @@ def visualisation(network_list):
 visualisation(network)
 
 # ----------------------------------------------------------------------------------------------------------------------
-endpoint = random.choice(network)
+for j in range(5):                      # How many logs
+    route = []
+    route.append(root.copy())
+    route[len(route) - 1].request_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
+    next_server = network[random.choice(root.suc)-1]
+    go_on = True
+
+    while go_on:
+        route.append(next_server.copy())
+        route[len(route) - 1].request_time = round((route[len(route) - 1].request_time +
+                                              abs(np.random.normal(0, 10))), ndigits=2)
+        if type(next_server.suc) is int:
+            next = next_server.suc
+        else:
+            next = random.choice(next_server.suc)
+        next_server = network[next-1]
+        stop = random.choice(stop_log)
+        if next_server.suc == "Last_node" or stop == 1:
+            go_on = False
+            route.append(next_server.copy())
+            route[len(route) - 1].request_time = round((route[len(route) - 1].request_time +
+                                                  abs(np.random.normal(0, 10))), ndigits=2)
+    #print()
+    #for server in route:
+        #print(server)
+
+    log = []
+    base_time = route[0].request_time
+
+    for i in range(len(route) - 1):                         #what request and response time you use at the end?
+        if i == 0:
+            log.append((route[i].name, route[i+1].name, round(base_time,ndigits=2), "Request", j))
+        else:
+            log.append((route[i].name, route[i + 1].name, round(base_time+route[i].request_time, ndigits=2), "Request", j))
+            base_time = base_time+route[i].request_time
+
+    for i in range(len(route) - 1, 0, -1):
+        log.append((route[i].name, route[i-1].name, round(base_time+route[i].response_time, ndigits=2), "Response", j))
+        base_time = base_time+route[i].response_time
+
+    print()
+    for l in log:
+        print(l)

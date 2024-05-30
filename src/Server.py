@@ -14,6 +14,12 @@ class Server:
     def set_suc(self, value):
         self.suc = value
 
+    def get_suc(self):
+        return self.suc
+
+    def copy(self):
+        return Server(self.name, self.response, self.response_time, self.request_time, self.pred, self.suc, self.dup)
+
     def __repr__(self):
         return f"Server(name='{self.name}', response={self.response}, response_time={self.response_time}, request_time={self.request_time}, pred={[self.pred]}, suc={[self.suc]}, dup={[self.dup]})"
 
