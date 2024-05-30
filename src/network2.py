@@ -28,6 +28,7 @@ sisters_nodes_names = []                        # List we need to update the pre
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(1, 4)]
+amount_of_logs = 5
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -227,7 +228,7 @@ def visualisation(network_list):
 visualisation(network)
 
 # ----------------------------------------------------------------------------------------------------------------------
-for j in range(5):                      # How many logs
+for j in range(amount_of_logs):                      # Log generation
     route = []
     route.append(root.copy())
     route[len(route) - 1].request_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
@@ -256,7 +257,7 @@ for j in range(5):                      # How many logs
     log = []
     base_time = route[0].request_time
 
-    for i in range(len(route) - 1):                         #what request and response time you use at the end?
+    for i in range(len(route) - 1):                         # What request and response time you use at the end? solved?
         if i == 0:
             log.append((route[i].name, route[i+1].name, round(base_time,ndigits=2), "Request", j))
         else:
