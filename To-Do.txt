@@ -16,6 +16,9 @@ Random thoughts (Yoav):
 
 Hash Function:
 " First group on ID"
+- (Mick:) Werken met een lijst van logs, deze doormiddel van groupBy() en filter() verdelen over kleinere lijsten
+die we bijhouden in nog steeds een grote lijst, en dan itereren over die lijsten op dezelde manier tot we een lijst met
+super kleine lijsten hebben waarvan we zeggen dat het dezelfde processen zijn.
 
 Tijd:
 - Totale tijd (met intervals van bv 50 ms)
