@@ -15,28 +15,27 @@ to_append_nodes = []                            # List of nodes that still need 
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
 mean = 50                                       # Mean for timestamp generation
-mean_start_node = 1000
+mean_start_node = 1000                          # Mean for timestamp generation of user
 std_dev = 20                                    # Std_deviation for timestamp generation
-std_dev_start_node = 300
+std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 10)]      # How big the chance is that a node is the end node
-initial_branching = 4                         # How many options the user has (how many server paths exist)
-amount_of_dup = [2, 3, 4]                       # How many duplicates can exist
-amount_of_sisters = [2, 3]                      # How many sister nodes can exist
-chance_dup_nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]          # The chance of getting duplicate nodes
-chance_sisters_nodes = [1, 2, 3, 4, 5, 6, 7, 8, 9]      # The chance of getting sister nodes
-chance_random_link = [1, 2, 3]                          # Chance of getting a random link from a higher node going down
+stop_condition = [i for i in range(1, 400)]       # How big the chance is that a node is the end node
+initial_branching = 20                          # How many options the user has (how many server paths exist)
+amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
+amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
+chance_dup_nodes = [i for i in range(1, 6)]         # The chance of getting duplicate nodes
+chance_sisters_nodes = [i for i in range(1, 6)]     # The chance of getting sister nodes
+chance_random_link = [i for i in range(1, 3)]       # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
-stop_log = [i for i in range(1, 30)]
-amount_of_logs = 5
-go_back_up = [1]
-chance_go_back_up = [1]
+stop_log = [i for i in range(1, 12)]             # Chance of server failing
+amount_of_logs = 100                            # How many tasks were performed (one path from node zero to node zero)
+chance_go_back_up = [i for i in range(1, 4)]    # Chance of a server calling more than one server
 # ----------------------------------------------------------------------------------------------------------------------
 
-
+# Function responsible for
 def successor_update(previous_server, nr):
     if type(previous_server.suc) is list:
         successors = []
@@ -228,7 +227,7 @@ def visualisation(network_list):
     plt.show()
 
 
-visualisation(network)
+#visualisation(network)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -246,7 +245,7 @@ def make_path():
         if go_back:
             if random.choice(chance_go_back_up) == 1:
                 go_back = False
-        if not go_back:
+        if not go_back and random.choice(stop_log) != 1:
             if type(network_2[next_server-1].suc) is int:
                 next_server2 = network_2[next_server-1].suc
                 network_2[next_server2 - 1].pred = next_server
@@ -289,7 +288,7 @@ def make_path():
 #- impliment that it sometimes does not go all the way up again, you might need another boolean for this
 
 log = []
-for j in range(5):
+for j in range(amount_of_logs):
     route = make_path()
     base_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
     for i in range(len(route)-1):
@@ -297,10 +296,16 @@ for j in range(5):
             log.append(("S0", f"S{route[1][0]}", base_time, "Request", j))
         else:
             if not route[i+1][1]:
-                random_response_time = network[route[i][0]].request_time + np.random.normal(mean, std_dev)
-                log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
-                            abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
-                base_time += random_response_time
+                if route[i][0] == len(network):
+                    random_response_time = network[len(network)-1].request_time + np.random.normal(mean, std_dev)
+                    log.append((f"S{route[i][0]}", f"S{route[i + 1][0]}",
+                                abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
+                    base_time += random_response_time
+                else:
+                    random_response_time = network[route[i][0]].request_time + np.random.normal(mean, std_dev)
+                    log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
+                                abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
+                    base_time += random_response_time
             else:
                 if route[i][0] == len(network):
                     random_response_time = network[len(network)-1].response_time + np.random.normal(mean, std_dev)
@@ -319,8 +324,8 @@ for l in log:
 final_sorted_log = sorted(log, key=lambda x: x[2])
 print()
 
-for l in final_sorted_log:
-    print(l)
+#for l in final_sorted_log:
+    #print(l)
 
 
 
