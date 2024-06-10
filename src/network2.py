@@ -19,7 +19,7 @@ mean_start_node = 1000                          # Mean for timestamp generation 
 std_dev = 20                                    # Std_deviation for timestamp generation
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 400)]       # How big the chance is that a node is the end node
+stop_condition = [i for i in range(1, 10)]       # How big the chance is that a node is the end node
 initial_branching = 20                          # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
@@ -32,7 +32,7 @@ end_nodes = []                                  # List of nodes that do not have
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(1, 12)]             # Chance of server failing
 amount_of_logs = 100                            # How many tasks were performed (one path from node zero to node zero)
-chance_go_back_up = [i for i in range(1, 4)]    # Chance of a server calling more than one server
+chance_go_back_up = [i for i in range(1, 2)]    # Chance of a server calling more than one server
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Function responsible for
@@ -324,9 +324,24 @@ for l in log:
 final_sorted_log = sorted(log, key=lambda x: x[2])
 print()
 
-#for l in final_sorted_log:
-    #print(l)
+for l in final_sorted_log:
+    print(l)
 
+print(final_sorted_log)
+
+formatted_data = [
+    {f"server_1": item[0], f"server_2": item[1], f"time_stamp": item[2], f"type": item[3], f"ID": item[4]}
+    for item in final_sorted_log
+]
+
+json_data = json.dumps(formatted_data, indent=4)
+
+# Step 3: Write the serialized function to a JSON file
+with open("function.json", "w") as json_file:
+    json_file.write(json_data)
+
+print("Function has been written to function.json")
+print(os.getcwd())
 
 
 
