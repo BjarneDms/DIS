@@ -9,7 +9,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "/Users/Mick/Desktop/PycharmProjects/DIS/test.json"
+json_file_path = "../test.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -35,29 +35,6 @@ result_df = grouped_df.withColumn("time_differences", compute_time_differences_u
 # Compute the total time as the sum of time differences
 result_df = result_df.withColumn("total_time", F.expr("aggregate(time_differences, 0D, (acc, x) -> acc + x)"))
 
-# Define the bucketing criteria
-total_time_buckets = [
-    (200, 250, "200-250"),
-    (250, 300, "250-300"),
-    (300, 350, "300-350")
-]
-
-# Define a UDF to assign buckets based on total time
-def assign_total_time_bucket(total_time):
-    for lower, upper, bucket_name in total_time_buckets:
-        if lower <= total_time < upper:
-            return bucket_name
-    return "out_of_range"
-
-# Register the UDF
-assign_total_time_bucket_udf = udf(assign_total_time_bucket, StringType())
-
-# Apply the UDF to assign each process to a bucket
-bucketed_df = result_df.withColumn("total_time_bucket", assign_total_time_bucket_udf(col("total_time")))
-
-# Show the bucketed DataFrame
-bucketed_df.select("ID", "total_time", "total_time_bucket").show(truncate=False)
-
 # Define sub-bucketing criteria based on the length of 'server_1' list
 process_length_buckets = [
     (4, 6, "4-6"),
@@ -76,13 +53,44 @@ def assign_process_length_bucket(servers_1):
 assign_process_length_bucket_udf = udf(assign_process_length_bucket, StringType())
 
 # Apply the UDF to assign each process to a sub-bucket
-bucketed_df = bucketed_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("servers_1")))
+bucketed_df = result_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("servers_1")))
+
+# Define the bucketing criteria
+total_time_buckets = [
+    (200, 250, "200-250"),
+    (250, 300, "250-300"),
+    (300, 350, "300-350")
+]
+
+# Define a UDF to assign buckets based on total time
+def assign_total_time_bucket(total_time):
+    for lower, upper, bucket_name in total_time_buckets:
+        if lower <= total_time < upper:
+            return bucket_name
+    return "out_of_range"
+
+# Register the UDF
+assign_total_time_bucket_udf = udf(assign_total_time_bucket, StringType())
+
+# Apply the UDF to assign each process to a bucket
+bucketed_df = bucketed_df.withColumn("total_time_bucket", assign_total_time_bucket_udf(col("total_time")))
 
 # Combine the buckets into a single column for easier handling
 bucketed_df = bucketed_df.withColumn("combined_bucket", F.concat_ws("_", col("total_time_bucket"), col("process_length_bucket")))
 
-# Show the final DataFrame with sub-buckets
-bucketed_df.show()
+# The first DataFrame that keeps all information per process (ID)
+all_info_df = bucketed_df.select("ID", "servers_1", "servers_2", "time_stamps", "types", "time_differences", "total_time", "combined_bucket")
+
+# Show the DataFrame
+all_info_df.show(truncate=False)
+
+# Group by combined_bucket and collect the IDs
+bucket_to_ids_df = bucketed_df.groupBy("combined_bucket").agg(
+    collect_list("ID").alias("process_ids")
+)
+
+# Show the DataFrame
+bucket_to_ids_df.show(truncate=False)
 
 # Stop the Spark session
 spark.stop()
