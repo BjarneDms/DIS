@@ -1,3 +1,4 @@
+import networkx as nx
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, DoubleType, StringType
@@ -91,6 +92,49 @@ bucket_to_ids_df = bucketed_df.groupBy("combined_bucket").agg(
 
 # Show the DataFrame
 bucket_to_ids_df.show(truncate=False)
+
+# Create a graph
+G = nx.Graph()
+
+# Add nodes and edges to the graph
+for row in bucket_to_ids_df.collect():
+    process_ids = row['process_ids']
+    print(process_ids)
+    for i in range(len(process_ids)):
+        process_id_1 = process_ids[i]
+        G.add_node(process_id_1)
+        for j in range(i + 1, len(process_ids)):
+            process_id_2 = process_ids[j]
+            print(process_id_1, process_id_2)
+            G.add_node(process_id_2)
+
+            servers_i = all_info_df.filter(col("ID") == process_id_1).select("servers_2").collect()[0]['servers_2']
+            servers_j = all_info_df.filter(col("ID") == process_id_2).select("servers_2").collect()[0]['servers_2']
+            union = set(servers_i) | set(servers_j)
+            intersection = set(servers_i) & set(servers_j)
+
+            # Jaccard similarity to be assigned as weight to the edge
+            jac_sim = float(len(intersection)) / len(union)
+            if G.has_edge(process_id_1, process_id_2):
+                ()
+            else:
+                G.add_edge(process_id_1, process_id_2, weight=jac_sim)
+
+# Print edges with weights
+for edge in G.edges(data=True):
+    print(edge)
+for node in G.nodes(data=True):
+    print(node)
+
+import matplotlib.pyplot as plt
+
+# Draw the graph
+#ToDo: dit kan weg maar nu voor visualisatie
+pos = nx.spring_layout(G)  # positions for all nodes
+weights = nx.get_edge_attributes(G, 'weight').values()
+nx.draw(G, pos, with_labels=True, node_size=700, node_color='lightblue', font_size=10, width=list(weights))
+nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): f'{d["weight"]:.2f}' for u, v, d in G.edges(data=True)})
+plt.show()
 
 # Stop the Spark session
 spark.stop()
