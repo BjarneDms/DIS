@@ -1,0 +1,5 @@
+pyspark~=3.5.1
+networkx~=3.3
+pygraphviz~=1.13
+matplotlib~=3.9.0
+numpy~=1.26.4

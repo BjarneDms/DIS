@@ -38,6 +38,16 @@ Server:
 - Op basis van server volgorde processes vergelijken en sorteren op commonality
 	* cosine similarity
 	* kies een hash function die transitive is
-	* zoek naar server die het vaakst voorkomt in een bucket met processen, en splits de 		  bucket op basis van welke processen deze server bevatten
-
+	* zoek naar server die het vaakst voorkomt in een bucket met processen, en splits de
+	    bucket op basis van welke processen deze server bevatten
+Hash logic:
+"Voor opdracht 1 gaan we 3 hash functions gebruiken.
+- Totale lengte van een process (gebaseerd op server lengte)
+- Totale tijd (met interval)
+- Variantie in tijd (met interval.
+Deze buckets combineren we tot lengte + totale tijd & lengte + variantie
+om binnen deze combi buckets similarity measures te doen.
+Op deze manier kunnen de hash functions simpel blijven zonder dat we daarbij accuracy
+opofferen. Het combineren van buckets zal het aantal onnodige pairwise comparisons reduceren."
+Hash Function 1:
 
