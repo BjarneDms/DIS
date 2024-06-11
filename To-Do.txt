@@ -44,10 +44,18 @@ Hash logic:
 "Voor opdracht 1 gaan we 3 hash functions gebruiken.
 - Totale lengte van een process (gebaseerd op server lengte)
 - Totale tijd (met interval)
-- Variantie in tijd (met interval.
+- Variantie in tijd (met interval)
 Deze buckets combineren we tot lengte + totale tijd & lengte + variantie
 om binnen deze combi buckets similarity measures te doen.
 Op deze manier kunnen de hash functions simpel blijven zonder dat we daarbij accuracy
 opofferen. Het combineren van buckets zal het aantal onnodige pairwise comparisons reduceren."
-Hash Function 1:
+Dit is ook een manier om procesen sister nodes te onderscheiden van processen met duplicate nodes
+
+Idee Yoav:
+" Op dit moment worden de grenzen van de tijd buckets arbitrair bepaald. Wat als
+we dit dynamisch meegeven aan de functies. Zodat op basis van de logs de grenzen
+van de buckets worden bepaald."
+- Neem een sample van de logs
+- bereken de mean en stddev
+- geef deze mee als argument aan de hash functions
 

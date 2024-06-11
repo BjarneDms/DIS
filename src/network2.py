@@ -1,12 +1,10 @@
 from Server import Server
 import networkx as nx
-import pygraphviz
 import random
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
 import json
-import inspect
 import os
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -227,7 +225,7 @@ def visualisation(network_list):
     plt.show()
 
 
-#visualisation(network)
+visualisation(network)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -337,7 +335,7 @@ formatted_data = [
 json_data = json.dumps(formatted_data, indent=4)
 
 # Step 3: Write the serialized function to a JSON file
-with open("function.json", "w") as json_file:
+with open("logfile.json", "w") as json_file:
     json_file.write(json_data)
 
 print("Function has been written to function.json")

@@ -3,7 +3,11 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
+import community
 import math
+import json
+from filefunctions import observationfile
+
 
 # Create a Spark session
 spark = SparkSession.builder \
@@ -76,10 +80,12 @@ bucket_to_ids_df = length_stddev_bucket_df.groupBy("length_time_bucket", "length
 bucket_to_ids_df.show()
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
-"""In this section a graph will be created between all candidate processes.
-    The nodes represent the processes
-    The edges the candidate pairs
-    The edge weigths are the Jaccard similarities"""
+"""
+In this section a graph will be created between all candidate processes.
+The nodes represent the processes
+The edges the candidate pairs
+The edge weigths are the Jaccard similarities
+"""
 
 # Create a graph
 G = nx.Graph()
@@ -108,21 +114,24 @@ for row in bucket_to_ids_df.collect():
             else:
                 G.add_edge(process_id_1, process_id_2, weight=jac_sim)
 
-# Print edges with weights
-for edge in G.edges(data=True):
-    print(edge)
-for node in G.nodes(data=True):
-    print(node)
+#-----------------------------------------------------------------------------------------------------------------------------#
+"""
+From the network, equivalence clusters are created using the Louvain algorithm
+for weighted graphs
+"""
+# Use the Louvain algorithm to find clusters
+partition = community.best_partition(G)
 
-import matplotlib.pyplot as plt
+#Switch the key-value pairs so each key denotes a cluster of processes
+clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partition.values())}
 
-# Draw the graph
-#ToDo: dit kan weg maar nu voor visualisatie
-pos = nx.spring_layout(G)  # positions for all nodes
-weights = nx.get_edge_attributes(G, 'weight').values()
-nx.draw(G, pos, with_labels=True, node_size=700, node_color='lightblue', font_size=10, width=list(weights))
-nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): f'{d["weight"]:.2f}' for u, v, d in G.edges(data=True)})
-plt.show()
+# # Write the results to the observation file
+# Open the logfile
+with open('../test.json', 'r') as r:
+    logfile = json.load(r)
+
+# Write to .txt
+observationfile(part="1", group=clusters, logfile=logfile)
 
 # Stop the Spark session
 spark.stop()
