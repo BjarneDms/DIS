@@ -6,16 +6,16 @@ from pyspark.sql import functions as F
 import community
 import math
 import json
-from filefunctions import observationfile
+from filefunctions import observationfile, output
 
 
 # Create a Spark session
 spark = SparkSession.builder \
-    .appName("Read JSON with Spark") \
+    .appName("Read log with Spark") \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../test.json"
+json_file_path = "../data/logfile.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -77,7 +77,7 @@ bucket_to_ids_df = length_stddev_bucket_df.groupBy("length_time_bucket", "length
     collect_list("ID").alias("process_ids")
 )
 # Show the DataFrame
-bucket_to_ids_df.show()
+all_info_df.show()
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
@@ -93,13 +93,11 @@ G = nx.Graph()
 # Add nodes and edges to the graph
 for row in bucket_to_ids_df.collect():
     process_ids = row['process_ids']
-    print(process_ids)
     for i in range(len(process_ids)):
         process_id_1 = process_ids[i]
         G.add_node(process_id_1)
         for j in range(i + 1, len(process_ids)):
             process_id_2 = process_ids[j]
-            print(process_id_1, process_id_2)
             G.add_node(process_id_2)
 
             servers_i = all_info_df.filter(col("ID") == process_id_1).select("servers_2").collect()[0]['servers_2']
@@ -124,14 +122,28 @@ partition = community.best_partition(G)
 
 #Switch the key-value pairs so each key denotes a cluster of processes
 clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partition.values())}
-
-# # Write the results to the observation file
+# # Write the results to the output & observation file
 # Open the logfile
-with open('../test.json', 'r') as r:
-    logfile = json.load(r)
+with open('../data/logfile.json', 'r') as r:
+    log = json.load(r)
 
-# Write to .txt
-observationfile(part="1", group=clusters, logfile=logfile)
+# Write output to .txt
+output(group=clusters, logfile=log)
+
+# And to .json for further analysis
+formatted_data = []
+with open("../data/part1Output.txt", 'r') as r:
+    for line in r:
+        strip = line.strip()
+        clean = strip.replace('<', '').replace('>', '').split(",")
+        call = {f"server_1": clean[0], f"server_2": clean[1], f"time_stamp": clean[2], f"type": clean[3], f"ID": clean[4]}
+        formatted_data.append(call)
+
+with open("../data/part1Output.json", 'w') as f:
+    json.dump(formatted_data, f, indent=4)
+
+# Write observations to .txt
+observationfile(part="1", group=clusters, logfile=log)
 
 # Stop the Spark session
 spark.stop()
