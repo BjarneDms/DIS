@@ -8,11 +8,15 @@ with open('copied_network.pkl', 'rb') as f:
 with open('log_experiments.pkl', 'rb') as f:
     log_experiments = pickle.load(f)
 
+with open('clusters.pkl', 'rb') as f:
+    clusters = pickle.load(f)
+
+print(clusters.items())
 
 # ------------------------------
 # Experiment 1
 
-# can be removed
+# can be removed, here i get micks candidate pairs of only branching factor and length
 candidate_pairs = [('1', 0), ('1', 1), ('1', 2), ('1', 3), ('1', 4), ('1', 5), ('1', 6), ('1', 7), ('1', 8), ('1', 9)]
 
 grouped_pairs = defaultdict(list)
@@ -55,7 +59,9 @@ for tuples in filtered_comparisons:
     i = 0
     error_found = False
     while not error_found and i != len(grouped_tuples[tuples[0]]):
-        if grouped_tuples[tuples[0]][i][1] != grouped_tuples[tuples[1]][i][1]:
+        if len(grouped_tuples[tuples[0]]) != len(grouped_tuples[tuples[1]]):
+            error_found = True
+        elif grouped_tuples[tuples[0]][i][1] != grouped_tuples[tuples[1]][i][1]:
             server_number = grouped_tuples[tuples[0]][i][1].lstrip('S')
             server_number = int(server_number)
             if network[server_number-1].dup != None:
@@ -71,6 +77,9 @@ for tuples in filtered_comparisons:
             dict_correct_merges[tuples[0]] = [tuples[1]]
         else:
             dict_correct_merges[tuples[0]].append(tuples[1])
+
+#for l in log_experiments:
+    #print(l)
 
 print(dict_correct_merges)
 

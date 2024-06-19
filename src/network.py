@@ -9,7 +9,7 @@ import os
 import pickle
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1]                    # Branching factor is averagely 2
+branching_factor = [1]                          # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
@@ -19,7 +19,7 @@ std_dev = 20                                    # Std_deviation for timestamp ge
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 network = []                                    # List of all the servers
 stop_condition = [i for i in range(1, 2)]       # How big the chance is that a node is the end node
-initial_branching = 2                          # How many options the user has (how many server paths exist)
+initial_branching = 2                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
 chance_dup_nodes = [i for i in range(1, 4)]         # The chance of getting duplicate nodes
@@ -29,9 +29,9 @@ dup_nodes_names = []                            # List we need to update the pre
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
-stop_log = [i for i in range(1, 12)]             # Chance of server failing
-amount_of_logs = 10                            # How many tasks were performed (one path from node zero to node zero)
-chance_go_back_up = [i for i in range(1, 100)]    # Chance of a server calling more than one server
+stop_log = [i for i in range(1, 12)]            # Chance of server failing
+amount_of_logs = 10                             # How many tasks were performed (one path from node zero to node zero)
+chance_go_back_up = [i for i in range(1, 100)]  # Chance of a server calling more than one server
 log_length = 15
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -369,11 +369,3 @@ with open("../data/logfile.txt", 'w') as f:
 
 print("Logfile has been written to data")
 print(os.getcwd())
-
-
-
-
-
-
-
-

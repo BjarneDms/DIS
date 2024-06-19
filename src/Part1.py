@@ -7,6 +7,7 @@ import community
 import math
 import json
 from filefunctions import observationfile, output
+import pickle
 
 
 # Create a Spark session
@@ -77,7 +78,7 @@ bucket_to_ids_df = length_stddev_bucket_df.groupBy("length_time_bucket", "length
     collect_list("ID").alias("process_ids")
 )
 # Show the DataFrame
-all_info_df.show()
+bucket_to_ids_df.show()
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
@@ -144,6 +145,10 @@ with open("../data/part1Output.json", 'w') as f:
 
 # Write observations to .txt
 observationfile(part="1", group=clusters, logfile=log)
+
+# For experiment 1
+with open('clusters.pkl', 'wb') as f:
+    pickle.dump(clusters, f)
 
 # Stop the Spark session
 spark.stop()
