@@ -1,37 +1,35 @@
-import networkx as nx
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
+import networkx as nx
 import community
-import math
 import json
-from filefunctions import observationfile, output
-import pickle
+from filefunctions import stddev, observationfile, output
 
 
 # Create a Spark session
 spark = SparkSession.builder \
-    .appName("Read log with Spark") \
+    .appName("Merge identical processes") \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../data/logfile.json"
+json_file_path = "../test.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
 
 # Group by ID and collect all relevant columns into a list
 grouped_df = df.groupBy("ID").agg(
-    collect_list(col("server_1")).alias("servers_1"),
-    collect_list(col("server_2")).alias("servers_2"),
+    collect_list(col("server_1")).alias("from_servers"),
+    collect_list(col("server_2")).alias("to_servers"),
     collect_list(col("time_stamp")).alias("time_stamps"),
     collect_list(col("type")).alias("types")
 )
 #Hash Functions
 #Hash 1: Total length (Unique server mentions)
-def assign_process_length_bucket(servers_1:ArrayType) -> list:
-    return [len(set(servers_1))]
+def assign_process_length_bucket(from_servers:ArrayType) -> list:
+    return [len(set(from_servers))]
 assign_process_length_bucket_udf = udf(assign_process_length_bucket, ArrayType(IntegerType()))
 
 #Hash 2: Total time (in milliseconds)
@@ -40,22 +38,13 @@ def compute_time_differences(time_stamps:ArrayType) -> list:
     return [int((total_time // 50) + 1)]
 compute_time_differences_udf = udf(compute_time_differences, ArrayType(IntegerType()))
 
-#Hash 3: Variance in time (standard deviation(stddev)
-#First define a function to calculate the stddev
-def stddev(time_stamps:ArrayType) -> float:
-    length = len(time_stamps)
-    mean = sum(time_stamps) / length
-    var = sum((elem - mean) ** 2 for elem in time_stamps) / length
-    var = round(var, ndigits=2)
-    return math.sqrt(var)
-
-#Define the hash function to hash to intervals of 5ms
+#Hash 3: Variance in time (5ms)(standard deviation(stddev)
 def time_variance_bucket(time_stamps:ArrayType) -> list:
     return [int((stddev(time_stamps) // 5) + 1)]
 time_variance_bucket_udf = udf(time_variance_bucket, ArrayType(IntegerType()))
 
 # Apply Hash 1:
-df_h1 = grouped_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("servers_1")))
+df_h1 = grouped_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("from_servers")))
 
 #Apply Hash 2:
 df_h2 = df_h1.withColumn("total_time_bucket", compute_time_differences_udf(col("time_stamps")))
@@ -71,7 +60,7 @@ length_time_bucket_df = df_h3.withColumn("length_time_bucket", F.concat_ws("_", 
 length_stddev_bucket_df = length_time_bucket_df.withColumn("length_stddev_bucket", F.concat_ws("_", col("process_length_bucket"), col("stddev_bucket")))
 
 # The DataFrame that keeps all information per process (ID)
-all_info_df = length_stddev_bucket_df.select("ID", "servers_1", "servers_2", "time_stamps", "types", "length_time_bucket", "length_stddev_bucket")
+all_info_df = length_stddev_bucket_df.select("ID", "from_servers", "to_servers", "time_stamps", "types", "length_time_bucket", "length_stddev_bucket")
 
 # Group by the 2 combined buckets and collect the IDs
 bucket_to_ids_df = length_stddev_bucket_df.groupBy("length_time_bucket", "length_stddev_bucket").agg(
@@ -101,8 +90,8 @@ for row in bucket_to_ids_df.collect():
             process_id_2 = process_ids[j]
             G.add_node(process_id_2)
 
-            servers_i = all_info_df.filter(col("ID") == process_id_1).select("servers_2").collect()[0]['servers_2']
-            servers_j = all_info_df.filter(col("ID") == process_id_2).select("servers_2").collect()[0]['servers_2']
+            servers_i = all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
+            servers_j = all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
             union = set(servers_i) | set(servers_j)
             intersection = set(servers_i) & set(servers_j)
 
@@ -137,7 +126,7 @@ with open("../data/part1Output.txt", 'r') as r:
     for line in r:
         strip = line.strip()
         clean = strip.replace('<', '').replace('>', '').split(",")
-        call = {f"server_1": clean[0], f"server_2": clean[1], f"time_stamp": clean[2], f"type": clean[3], f"ID": clean[4]}
+        call = {f"from_servers": clean[0], f"to_servers": clean[1], f"time_stamp": float(clean[2]), f"type": clean[3], f"ID": int(clean[4])}
         formatted_data.append(call)
 
 with open("../data/part1Output.json", 'w') as f:
@@ -145,10 +134,6 @@ with open("../data/part1Output.json", 'w') as f:
 
 # Write observations to .txt
 observationfile(part="1", group=clusters, logfile=log)
-
-# For experiment 1
-with open('clusters.pkl', 'wb') as f:
-    pickle.dump(clusters, f)
 
 # Stop the Spark session
 spark.stop()
