@@ -59,3 +59,59 @@ van de buckets worden bepaald."
 - bereken de mean en stddev
 - geef deze mee als argument aan de hash functions
 
+Goal 1:
+- Hash functions updaten
+- jaccard similarity ordered maken
+- meta variables zelf berekenen
+
+Goal 1 (extra):
+- lijst bijhouden van al vergeleken
+
+goal 2:
+- alles
+
+experimenten 0 - yoav (log lengte ipv aantal processes)
+- breedte varieren met constante log lengte
+- lengte varieren met constante log lengte
+- processen verhogen met constante lengte en breedte
+
+experiment 1 - yoav
+- candidate pairs van alleen lengte en braching vergelijken
+
+experiment 2 - mick
+-
+
+
+Bjarne
+halve dagen tot tentamen
+
+22
+23
+
+25 - tentamen
+
+27 - laatste dag
+
+
+mick
+28 - laatste dag
+
+yoav
+
+23
+24
+25
+
+27
+
+28 - laatste dag
+
+
+
+
+
+
+Mention in report:
+-
+
+
