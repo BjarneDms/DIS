@@ -6,9 +6,11 @@ import numpy as np
 import copy
 import json
 import os
+from collections import defaultdict
+from itertools import groupby
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1, 2, 3]                    # Branching factor is averagely 2
+branching_factor = [1]                    # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
@@ -17,11 +19,11 @@ mean_start_node = 1000                          # Mean for timestamp generation 
 std_dev = 20                                    # Std_deviation for timestamp generation
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 5)]       # How big the chance is that a node is the end node
-initial_branching = 5                          # How many options the user has (how many server paths exist)
+stop_condition = [i for i in range(1, 2)]       # How big the chance is that a node is the end node
+initial_branching = 2                          # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
-chance_dup_nodes = [i for i in range(1, 9)]         # The chance of getting duplicate nodes
+chance_dup_nodes = [i for i in range(1, 4)]         # The chance of getting duplicate nodes
 chance_sisters_nodes = [i for i in range(1, 9)]     # The chance of getting sister nodes
 chance_random_link = [i for i in range(1, 5)]       # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
@@ -29,8 +31,8 @@ sisters_nodes_names = []                        # List we need to update the pre
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(1, 12)]             # Chance of server failing
-amount_of_logs = 100                            # How many tasks were performed (one path from node zero to node zero)
-chance_go_back_up = [i for i in range(1, 2)]    # Chance of a server calling more than one server
+amount_of_logs = 10                            # How many tasks were performed (one path from node zero to node zero)
+chance_go_back_up = [i for i in range(1, 100)]    # Chance of a server calling more than one server
 log_length = 15
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -289,9 +291,9 @@ def make_path():
 
 not_long_enough = True
 log = []
-j = 1                                       #voor log lengte
-#for j in range(amount_of_logs):            #voor log proceses
-while not_long_enough:                      #voor log lengte
+#j = 0                                       #voor log lengte
+for j in range(amount_of_logs):            #voor log proceses
+#while not_long_enough:                      #voor log lengte
     route = make_path()
     base_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
     for i in range(len(route)-1):
@@ -323,9 +325,11 @@ while not_long_enough:                      #voor log lengte
 
     # voor log lengte
     # -------
+    """
     j += 1
     if len(log) > log_length:
         not_long_enough = False
+    """
     # -------
 
 for l in log:
@@ -337,6 +341,8 @@ final_sorted_log = sorted(log, key=lambda x: x[2])
     #print(l)
 
 #print(final_sorted_log)
+
+log_experiments = copy.deepcopy(log)
 
 formatted_data = [
     {f"server_1": item[0], f"server_2": item[1], f"time_stamp": item[2], f"type": item[3], f"ID": item[4]}
@@ -355,3 +361,77 @@ with open("../data/logfile.txt", 'w') as f:
 
 print("Logfile has been written to data")
 print(os.getcwd())
+
+
+# ------------------------------
+# Experiment 1
+
+# can be removed
+candidate_pairs = [('1', 0), ('1', 1), ('1', 2), ('1', 3), ('1', 4), ('1', 5), ('1', 6), ('1', 7), ('1', 8), ('1', 9), ('1', 10)]
+
+grouped_pairs = defaultdict(list)
+
+for bucket, process in candidate_pairs:
+    grouped_pairs[bucket].append(process)
+# Till here
+
+
+def create_evaluation_pairs(grouped_pairs):
+    evaluation_pairs = []
+    for bucket, process in grouped_pairs.items():
+        for i in range(len(process)):
+            for j in range(i + 1, len(process)):
+                if process[i] != process[j]:
+                    evaluation_pairs.append((process[i], process[j]))
+    return evaluation_pairs
+
+
+comparisons = create_evaluation_pairs(grouped_pairs)
+
+filtered_comparisons = [(min(a, b), max(a, b)) for a, b in comparisons]
+filtered_comparisons = [comp for comp in filtered_comparisons if len(comp) == 2]
+filtered_comparisons = list(set(filtered_comparisons))
+filtered_comparisons = sorted(filtered_comparisons, key=lambda x: x[0])
+
+sorted_log = []
+for l in log_experiments:
+    sorted_log.append((l[0],l[1],l[4]))
+
+sorted_log = sorted(sorted_log, key=lambda x: x[2])
+
+grouped_tuples = {}
+for key, group in groupby(sorted_log, key=lambda x: x[2]):
+    grouped_tuples[key] = list(group)
+
+dict_correct_merges = {i: -1 for i in range(len(grouped_tuples))}
+
+for tuples in filtered_comparisons:
+    i = 0
+    error_found = False
+    while not error_found and i != len(grouped_tuples[tuples[0]]):
+        if grouped_tuples[tuples[0]][i][1] != grouped_tuples[tuples[1]][i][1]:
+            server_number = grouped_tuples[tuples[0]][i][1].lstrip('S')
+            server_number = int(server_number)
+            if network[server_number-1].dup != None:
+                if int(grouped_tuples[tuples[1]][i][1].lstrip('S')) not in network[server_number-1].dup:
+                    error_found = True
+            else:
+                error_found = True
+        i += 1
+    #print(i)
+    #print(len(grouped_tuples[tuples[0]]))
+    if i == len(grouped_tuples[tuples[0]]):
+        if dict_correct_merges[tuples[0]] == -1:
+            dict_correct_merges[tuples[0]] = [tuples[1]]
+        else:
+            dict_correct_merges[tuples[0]].append(tuples[1])
+
+print(dict_correct_merges)
+
+#splitten in missed en fout gegroepeerd
+
+
+
+
+
+
