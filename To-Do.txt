@@ -70,7 +70,7 @@ Goal 1 (extra):
 goal 2:
 - alles
 
-experimenten 0 - yoav (log lengte ipv aantal processes)
+experimenten 0 - yoav (log lengte ipv aantal processes) - done
 - breedte varieren met constante log lengte
 - lengte varieren met constante log lengte
 - processen verhogen met constante lengte en breedte

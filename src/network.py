@@ -289,8 +289,9 @@ def make_path():
 
 not_long_enough = True
 log = []
-#for j in range(amount_of_logs):
-while not_long_enough:
+j = 1                                       #voor log lengte
+#for j in range(amount_of_logs):            #voor log proceses
+while not_long_enough:                      #voor log lengte
     route = make_path()
     base_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
     for i in range(len(route)-1):
@@ -320,8 +321,12 @@ while not_long_enough:
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
 
+    # voor log lengte
+    # -------
+    j += 1
     if len(log) > log_length:
         not_long_enough = False
+    # -------
 
 for l in log:
     print(l)
