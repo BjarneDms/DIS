@@ -12,22 +12,9 @@ def stddev(time_stamps) -> int:
     var = round(var, ndigits=2)
     return int(math.sqrt(var))
 
-def variancehash_1(variance) -> int:
-    return (variance // 10) + 1
-
-def variancehash_2(variance) -> int:
-    return ((variance - 5) // 10) +1
-
 # For process length -------------------------------------------------------------
 def process_length(from_servers) -> int:
     return len(set(from_servers))
-
-def lengthhash_1(length) -> int:
-    return (length//6) + 1
-
-def lengthhash_2(length):
-    return ((length-3)//6) + 1
-
 
 
 # Output file functions ------------------------------------------------------
@@ -52,3 +39,4 @@ def output(group:dict, logfile:list):
                         if log.get('ID') == elem:
                             f.write(f"<{','.join(map(str, list(log.values())[:-1])) + ',' + str(i)}> \n")
             i += 1
+

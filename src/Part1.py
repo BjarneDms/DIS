@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, collect_list, udf
+from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
 import networkx as nx
@@ -22,7 +22,7 @@ json_file_path = "../test.json"
 df = spark.read.option('multiline', True).json(json_file_path)
 
 # Group by ID and collect all relevant columns into a list
-grouped_df = df.groupBy("ID").agg(
+info_df = df.groupBy("ID").agg(
     collect_list(col("server_1")).alias("from_servers"),
     collect_list(col("server_2")).alias("to_servers"),
     collect_list(col("time_stamp")).alias("time_stamps"),
@@ -30,54 +30,61 @@ grouped_df = df.groupBy("ID").agg(
 )
 #Hash Functions
 #Hash 1: Total length (Unique server mentions)
-def assign_process_length_bucket(from_servers:ArrayType) -> list:
-    return [process_length(from_servers)]
-assign_process_length_bucket_udf = udf(assign_process_length_bucket, ArrayType(IntegerType()))
+def assign_process_length_bucket(from_servers:ArrayType) -> int:
+    return process_length(from_servers)
+assign_process_length_bucket_udf = udf(assign_process_length_bucket, IntegerType())
 
 #Hash 2: Branching factor
-def branching_factor_bucket(types:ArrayType) -> list:
+def branching_factor_bucket(types:ArrayType) -> int:
     branching_factor = 0
     for i in range(len(types)):
         v = 0
         if types[i] == 'Response':
             v = 1
         branching_factor += i*v
-    return [branching_factor]
-branching_factor_bucket_udf = udf(branching_factor_bucket, ArrayType(IntegerType()))
+    return branching_factor
+branching_factor_bucket_udf = udf(branching_factor_bucket, IntegerType())
 
 # Hash 3: variance 1 and 2
 variance_udf = udf(stddev, IntegerType())
-grouped_df = grouped_df.withColumn(colName="variance", col=variance_udf(col("time_stamps")))
+info_df = info_df.withColumn(colName="variance", col=variance_udf(col("time_stamps")))
+
+# Determine the size of the buckets
+stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
+bucket_factor = 2
+bucket_size = int(stddev / bucket_factor)
 
 def variancehash_1(variance) -> int:
-    return (variance // 10) + 1
+    return variance // bucket_size + 1
 
 def variancehash_2(variance) -> int:
-    return ((variance - 5) // 10) +1
+    return (variance - bucket_size + 1) // bucket_size + 1
 
 variancehash_1_udf = udf(variancehash_1, IntegerType())
 variancehash_2_udf = udf(variancehash_2, IntegerType())
 
 # Apply Hash 1:
-df_h1 = grouped_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("from_servers")))
+info_df = info_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("from_servers")))
 
 #Apply Hash 2:
-df_h2 = df_h1.withColumn("branching_factor_bucket", branching_factor_bucket_udf(col("types")))
+info_df = info_df.withColumn("branching_factor_bucket", branching_factor_bucket_udf(col("types")))
 
 #Apply Hash 3:
-df_h3a = df_h2.withColumn("variance1_bucket", variancehash_1_udf(col("variance")))
-df_h3 = df_h3a.withColumn("variance2_bucket", variancehash_2_udf(col("variance")))
+info_df = info_df.withColumn("variance1_bucket", variancehash_1_udf(col("variance")))
+info_df = info_df.withColumn("variance2_bucket", variancehash_2_udf(col("variance")))
 
 # Combine buckets into a column
-combined_bucket_a_df = df_h3.withColumn("combined_bucket1",
+combined_bucket_df = info_df.withColumn("combined_bucket1",
     F.concat_ws("_",  col("process_length_bucket"),
     col("branching_factor_bucket"), col("variance1_bucket")))
-combined_bucket_df = combined_bucket_a_df.withColumn("combined_bucket2",
+combined_bucket_df = combined_bucket_df.withColumn("combined_bucket2",
     F.concat_ws("_",  col("process_length_bucket"),
-    col("branching_factor_bucket"), col("variance2_bucket")))
+    col("branching_factor_bucket"), col("variance2_bucket"))).select("ID", "combined_bucket1", "combined_bucket2")
 
-# The DataFrame that keeps all information per process (ID)
-all_info_df = combined_bucket_df.select("ID", "from_servers", "to_servers", "time_stamps", "types", "combined_bucket1", "combined_bucket2")
+# Combine buckets without variance, used in experiment 1
+exp_bucket_df = info_df.withColumn("exp_bucket",
+    F.concat_ws("_",  col("process_length_bucket"),
+    col("branching_factor_bucket"))).select("ID", "exp_bucket")
 
 # Group and combine by the 2 combined buckets and collect the IDs
 bucket1_to_ids_df = combined_bucket_df.groupBy("combined_bucket1").agg(
@@ -85,9 +92,15 @@ bucket1_to_ids_df = combined_bucket_df.groupBy("combined_bucket1").agg(
 bucket2_to_ids_df = combined_bucket_df.groupBy("combined_bucket2").agg(
     collect_list("ID").alias("process_ids"))
 bucket_to_ids_df = bucket1_to_ids_df.union(bucket2_to_ids_df).distinct()
+
+# Group the bucket for experiment 1
+exp_bucket_to_ids_df = exp_bucket_df.groupBy("exp_bucket").agg(
+    collect_list("ID").alias("process_ids"))
+
 # Show the DataFrame
 bucket_to_ids_df.show()
-all_info_df.show(truncate=False)
+exp_bucket_to_ids_df.show()
+info_df.show(truncate=False)
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
@@ -110,8 +123,8 @@ for row in bucket_to_ids_df.collect():
             process_id_2 = process_ids[j]
             G.add_node(process_id_2)
 
-            servers_i = all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
-            servers_j = all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
+            servers_i = info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
+            servers_j = info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
             union = set(servers_i) | set(servers_j)
             intersection = set(servers_i) & set(servers_j)
 
@@ -154,6 +167,20 @@ with open("../data/part1Output.json", 'w') as f:
 
 # Write observations to .txt
 observationfile(part="1", group=clusters, logfile=log)
+
+# Create list of candidate pairs for experiment 1
+cp_set = set()
+collected_data = exp_bucket_to_ids_df.collect()
+for row in collected_data:
+    ids = row['process_ids']
+    if len(ids)>1:
+        for i in range(len(ids)):
+            for j in range(i + 1, len(ids)):
+                cp_set.add((ids[i], ids[j]))
+cp_list = [list(pair) for pair in cp_set]
+with open("../data/candidate_pairs.json", 'w') as f:
+    json.dump(cp_list, f)
+
 
 # Stop the Spark session
 spark.stop()

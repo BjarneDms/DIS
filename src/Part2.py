@@ -2,10 +2,10 @@ import copy
 import pickle
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, collect_list, udf
+from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
-from filefunctions import lengthhash_1, lengthhash_2, process_length, stddev, variancehash_1, variancehash_2
+from filefunctions import process_length, stddev
 
 # Create a spark session
 spark = SparkSession.builder \
@@ -31,6 +31,30 @@ variance_udf = udf(stddev, IntegerType())
 # Add their columns
 df_prep = grouped_df.withColumn(colName="process_length", col=length_udf(col("from_servers"))) \
     .withColumn(colName="variance", col=variance_udf(col("time_stamps")))
+
+# Determine the size of the buckets for length
+stddev_l = df_prep.select(stddev_spark("process_length")).collect()[0][0]
+bucket_factor_l = 1
+bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
+
+
+def lengthhash_1(length) -> int:
+    return (length//bucket_size_l) + 1
+
+def lengthhash_2(length):
+    return ((length - ((bucket_size_l + 1)) // bucket_size_l) + 1)
+
+# Determine the size of the buckets for variance
+stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
+bucket_factor_var = 1
+bucket_size_var = int(stddev_var/bucket_factor_var)
+
+
+def variancehash_1(variance) -> int:
+    return (variance // (bucket_size_var) + 1)
+
+def variancehash_2(variance) -> int:
+    return ((variance - ((bucket_size_var + 1)) // bucket_size_var) + 1)
 
 # Create the hash functions
 lengthhash_1_udf = udf(lengthhash_1, IntegerType())
