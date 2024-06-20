@@ -6,7 +6,7 @@ from itertools import groupby
 with open('log_experiments.pkl', 'rb') as f:
     log_experiments = pickle.load(f)
 
-with open('clusters1.pkl', 'rb') as f:          #hier moet 2 komen te staan
+with open('clusters2.pkl', 'rb') as f:
     clusters = pickle.load(f)
 
 servers_per_process = {i: -1 for i in range(len(log_experiments))}
