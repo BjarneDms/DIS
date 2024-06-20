@@ -91,7 +91,7 @@ print(clusters)
 
 # Create a deepcopy for experiment 2
 clusters_deepcopy = copy.deepcopy(clusters)
-with open('../data/clusters2.pkl', 'wb') as f:
+with open('../clusters2.pkl', 'wb') as f:
     pickle.dump(clusters_deepcopy, f)
 
 spark.stop()

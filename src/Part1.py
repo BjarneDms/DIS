@@ -1,3 +1,5 @@
+import copy
+import pickle
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
@@ -154,6 +156,10 @@ with open("../data/part1Output.json", 'w') as f:
 
 # Write observations to .txt
 observationfile(part="1", group=clusters, logfile=log)
+
+deepcopy_pickle = copy.deepcopy(clusters)
+with open('clusters1.pkl', 'wb') as f:
+    pickle.dump(deepcopy_pickle, f)
 
 # Stop the Spark session
 spark.stop()
