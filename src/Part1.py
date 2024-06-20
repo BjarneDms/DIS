@@ -16,7 +16,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../test.json"
+json_file_path = "../data/logfile.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -75,6 +75,8 @@ combined_bucket_a_df = df_h3.withColumn("combined_bucket1",
 combined_bucket_df = combined_bucket_a_df.withColumn("combined_bucket2",
     F.concat_ws("_",  col("process_length_bucket"),
     col("branching_factor_bucket"), col("variance2_bucket")))
+combined_bucket_a_df.show()
+combined_bucket_df.show()
 
 # The DataFrame that keeps all information per process (ID)
 all_info_df = combined_bucket_df.select("ID", "from_servers", "to_servers", "time_stamps", "types", "combined_bucket1", "combined_bucket2")
@@ -86,8 +88,6 @@ bucket2_to_ids_df = combined_bucket_df.groupBy("combined_bucket2").agg(
     collect_list("ID").alias("process_ids"))
 bucket_to_ids_df = bucket1_to_ids_df.union(bucket2_to_ids_df).distinct()
 # Show the DataFrame
-bucket_to_ids_df.show()
-all_info_df.show(truncate=False)
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """

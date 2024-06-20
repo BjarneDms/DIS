@@ -16,7 +16,7 @@ def variancehash_1(variance) -> int:
     return (variance // 10) + 1
 
 def variancehash_2(variance) -> int:
-    return ((variance - 5) // 10) +1
+    return ((variance - 6) // 10) +1
 
 # For process length -------------------------------------------------------------
 def process_length(from_servers) -> int:
@@ -26,9 +26,7 @@ def lengthhash_1(length) -> int:
     return (length//6) + 1
 
 def lengthhash_2(length):
-    return ((length-3)//6) + 1
-
-
+    return ((length-4)//6) + 1
 
 # Output file functions ------------------------------------------------------
 def observationfile(part:str, group:dict, logfile:list):

@@ -1,6 +1,7 @@
 import copy
 import pickle
-
+import networkx as nx
+import community
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
@@ -52,12 +53,45 @@ combined_df = all_info_df.withColumn(colName="length1_variance1", col=F.concat_w
 
 # Show the groups with hashkeys
 hashkeys_df = combined_df.groupBy("length1_variance1", "length1_variance2",
-                                    "length2_variance1", "length2_variance2") \
+                                    "length2_variance1", "length2_variance2",
+                                  "process_length", "variance") \
     .agg(collect_list("ID").alias("group_IDs"))
 hashkeys_df.show()
 
+# Create a graph with Jaccard similarity as edge weigths
+G = nx.Graph()
+
+for row in hashkeys_df.collect():
+    process_ids = row['group_IDs']
+    for i in range(len(process_ids)):
+        process_id_1 = process_ids[i]
+        G.add_node(process_id_1)
+        for j in range(i + 1, len(process_ids)):
+            process_id_2 = process_ids[j]
+            G.add_node(process_id_2)
+
+            servers_i = all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
+            servers_j = all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
+            union = set(servers_i) | set(servers_j)
+            intersection = set(servers_i) & set(servers_j)
+
+            print(servers_i)
+
+            # Jaccard similarity to be assigned as weight to the edge
+            jac_sim = float(len(intersection)) / len(union)
+            if G.has_edge(process_id_1, process_id_2):
+                ()
+            else:
+                G.add_edge(process_id_1, process_id_2, weight=jac_sim)
+
+# Create cluster using Louvain algorithm as community detection algorithm
+partition = community.best_partition(G)
+clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partition.values())}
+print(clusters)
+
+# Create a deepcopy for experiment 2
 clusters_deepcopy = copy.deepcopy(clusters)
-with open('clusters2.pkl', 'wb') as f:
+with open('../data/clusters2.pkl', 'wb') as f:
     pickle.dump(clusters_deepcopy, f)
 
 spark.stop()
