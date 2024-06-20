@@ -1,3 +1,6 @@
+import copy
+import pickle
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
@@ -52,5 +55,9 @@ hashkeys_df = combined_df.groupBy("length1_variance1", "length1_variance2",
                                     "length2_variance1", "length2_variance2") \
     .agg(collect_list("ID").alias("group_IDs"))
 hashkeys_df.show()
+
+#clusters_deepcopy = copy.deepcopy(clusters)
+#with open('clusters2.pkl', 'wb') as f:
+    #pickle.dump(clusters_deepcopy, f)
 
 spark.stop()

@@ -1,3 +1,4 @@
+import copy
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf
 from pyspark.sql.types import ArrayType, IntegerType
@@ -6,6 +7,7 @@ import networkx as nx
 import community
 import json
 from filefunctions import stddev, observationfile, output
+import pickle
 
 
 # Create a Spark session
@@ -14,7 +16,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../test.json"
+json_file_path = "../data/logfile.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -95,6 +97,8 @@ for row in bucket_to_ids_df.collect():
             union = set(servers_i) | set(servers_j)
             intersection = set(servers_i) & set(servers_j)
 
+            print(servers_i)
+
             # Jaccard similarity to be assigned as weight to the edge
             jac_sim = float(len(intersection)) / len(union)
             if G.has_edge(process_id_1, process_id_2):
@@ -134,6 +138,10 @@ with open("../data/part1Output.json", 'w') as f:
 
 # Write observations to .txt
 observationfile(part="1", group=clusters, logfile=log)
+
+clusters_deepcopy = copy.deepcopy(clusters)
+with open('clusters1.pkl', 'wb') as f:
+    pickle.dump(clusters_deepcopy, f)
 
 # Stop the Spark session
 spark.stop()

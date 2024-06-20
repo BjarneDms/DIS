@@ -9,10 +9,12 @@ with open('copied_network.pkl', 'rb') as f:
 with open('log_experiments.pkl', 'rb') as f:
     log_experiments = pickle.load(f)
 
-with open('clusters.pkl', 'rb') as f:
+with open('clusters1.pkl', 'rb') as f:
     clusters = pickle.load(f)
 
 print(clusters.items())
+for l in log_experiments:
+    print(l)
 
 # ------------------------------
 # Experiment 1
