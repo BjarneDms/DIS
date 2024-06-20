@@ -90,8 +90,8 @@ clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partit
 print(clusters)
 
 # Create a deepcopy for experiment 2
-clusters_deepcopy = copy.deepcopy(clusters)
-with open('../clusters2.pkl', 'wb') as f:
-    pickle.dump(clusters_deepcopy, f)
+deepcopy_pickle = copy.deepcopy(clusters)
+with open('clusters2.pkl', 'wb') as f:
+    pickle.dump(deepcopy_pickle, f)
 
 spark.stop()
