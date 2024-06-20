@@ -92,7 +92,6 @@ for key in clusters.items():
 
 all_part1_merges = [(min(a, b), max(a, b)) for a, b in all_part1_merges]
 
-
 #for l in log_experiments:
     #print(l)
 
