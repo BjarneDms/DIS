@@ -46,22 +46,30 @@ all_info_df = df_prep.withColumn(colName="length_1", col=lengthhash_1_udf(col("p
     .withColumn(colName="variance_2", col=variancehash_2_udf(col("variance")))
 
 # Combine the length hashkeys with the variance hashkeys
-combined_df = all_info_df.withColumn(colName="length1_variance1", col=F.concat_ws("_", col("length_1"), col("variance_1"))) \
-    .withColumn(colName="length1_variance2", col=F.concat_ws("_", col("length_1"), col("variance_2"))) \
-    .withColumn(colName="length2_variance1", col=F.concat_ws("_", col("length_2"), col("variance_1"))) \
-    .withColumn(colName="length2_variance2", col=F.concat_ws("_", col("length_2"), col("variance_2")))
+lv11_df = all_info_df.withColumn(colName="length1_variance1", col=F.concat_ws("_", col("length_1"), col("variance_1")))
+lv12_df =   all_info_df.withColumn(colName="length1_variance2", col=F.concat_ws("_", col("length_1"), col("variance_2")))
+lv21_df = all_info_df.withColumn(colName="length2_variance1", col=F.concat_ws("_", col("length_2"), col("variance_1")))
+lv22_df = all_info_df.withColumn(colName="length2_variance2", col=F.concat_ws("_", col("length_2"), col("variance_2")))
+
 
 # Show the groups with hashkeys
-hashkeys_df = combined_df.groupBy("length1_variance1", "length1_variance2",
-                                    "length2_variance1", "length2_variance2",
-                                  "process_length", "variance") \
+hashkeys11_df = lv11_df.groupBy("length1_variance1") \
     .agg(collect_list("ID").alias("group_IDs"))
-hashkeys_df.show()
+hashkeys12_df = lv12_df.groupBy("length1_variance2") \
+    .agg(collect_list("ID").alias("group_IDs"))
+hashkeys21_df = lv21_df.groupBy("length2_variance1") \
+    .agg(collect_list("ID").alias("group_IDs"))
+hashkeys22_df = lv22_df.groupBy("length2_variance2") \
+    .agg(collect_list("ID").alias("group_IDs"))
 
+inter1_df = hashkeys11_df.union(hashkeys12_df).distinct()
+inter2_df = inter1_df.union(hashkeys21_df).distinct()
+finalhashkeys_df = inter2_df.union(hashkeys22_df).distinct()
+finalhashkeys_df.show()
 # Create a graph with Jaccard similarity as edge weigths
 G = nx.Graph()
 
-for row in hashkeys_df.collect():
+for row in finalhashkeys_df.collect():
     process_ids = row['group_IDs']
     for i in range(len(process_ids)):
         process_id_1 = process_ids[i]
@@ -90,8 +98,8 @@ clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partit
 print(clusters)
 
 # Create a deepcopy for experiment 2
-deepcopy_pickle = copy.deepcopy(clusters)
+clusters_deepcopy = copy.deepcopy(clusters)
 with open('clusters2.pkl', 'wb') as f:
-    pickle.dump(deepcopy_pickle, f)
+    pickle.dump(clusters_deepcopy, f)
 
 spark.stop()
