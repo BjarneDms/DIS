@@ -24,6 +24,11 @@ for bucket, process in candidate_pairs:
     grouped_pairs[bucket].append(process)
 # Till here
 
+with open("../data/length_branch_buckets", "r") as r:
+    length_branch_buckets = json.load(r)
+
+print(type(grouped_pairs))
+
 def create_evaluation_pairs(grouped_pairs):
     evaluation_pairs = []
     for bucket, process in grouped_pairs.items():
@@ -34,9 +39,7 @@ def create_evaluation_pairs(grouped_pairs):
     return evaluation_pairs
 
 
-comparisons = create_evaluation_pairs(grouped_pairs)
-
-print(comparisons)
+comparisons = create_evaluation_pairs(length_branch_buckets)
 
 filtered_comparisons = [(min(a, b), max(a, b)) for a, b in comparisons]
 filtered_comparisons = [comp for comp in filtered_comparisons if len(comp) == 2]
