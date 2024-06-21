@@ -8,8 +8,9 @@ from pyspark.sql import functions as F
 import networkx as nx
 import community
 import json
-from filefunctions import stddev, observationfile, output
+from filefunctions import observationfile, output
 from filefunctions import process_length, stddev
+from collections import Counter
 
 
 
@@ -128,11 +129,12 @@ for row in bucket_to_ids_df.collect():
 
             servers_i = info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
             servers_j = info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
-            union = set(servers_i) | set(servers_j)
-            intersection = set(servers_i) & set(servers_j)
+            counter_i = Counter(servers_i)
+            counter_j = Counter(servers_j)
 
-            # Jaccard similarity to be assigned as weight to the edge
-            jac_sim = float(len(intersection)) / len(union)
+            intersection_count = sum((counter_i & counter_j).values())
+            union_count = sum((counter_i | counter_j).values())
+            jac_sim = float(intersection_count) / union_count
             if G.has_edge(process_id_1, process_id_2):
                 ()
             else:
@@ -152,6 +154,7 @@ clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partit
 # Open the logfile
 with open('../data/logfile.json', 'r') as r:
     log = json.load(r)
+print(clusters)
 
 # Write output to .txt
 output(group=clusters, logfile=log)
