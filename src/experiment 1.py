@@ -18,20 +18,8 @@ for l in log_experiments:
 
 # ------------------------------
 # Experiment 1
-
-# can be removed, here i get micks candidate pairs of only branching factor and length
-candidate_pairs = [('1', 0), ('1', 1), ('1', 2), ('1', 3), ('1', 4), ('1', 5), ('1', 6), ('1', 7), ('1', 8), ('1', 9)]
-
-grouped_pairs = defaultdict(list)
-
-for bucket, process in candidate_pairs:
-    grouped_pairs[bucket].append(process)
-# Till here
-
 with open("../data/length_branch_buckets.json", "r") as r:
     length_branch_buckets = json.load(r)
-
-print(type(grouped_pairs))
 
 def create_evaluation_pairs(grouped_pairs):
     evaluation_pairs = []
