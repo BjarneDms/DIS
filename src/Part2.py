@@ -1,12 +1,13 @@
 import copy
 import pickle
+import json
 import networkx as nx
 import community
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
-from filefunctions import process_length, stddev
+from filefunctions import process_length, stddev, observationfile
 
 # Create a spark session
 spark = SparkSession.builder \
@@ -75,7 +76,6 @@ lv12_df = all_info_df.withColumn(colName="length1_variance2", col=F.concat_ws("_
 lv21_df = all_info_df.withColumn(colName="length2_variance1", col=F.concat_ws("_", col("length_2"), col("variance_1")))
 lv22_df = all_info_df.withColumn(colName="length2_variance2", col=F.concat_ws("_", col("length_2"), col("variance_2")))
 
-
 # Show the groups with hashkeys
 hashkeys11_df = lv11_df.groupBy("length1_variance1") \
     .agg(collect_list("ID").alias("group_IDs"))
@@ -107,7 +107,6 @@ for row in finalhashkeys_df.collect():
             union = set(servers_i) | set(servers_j)
             intersection = set(servers_i) & set(servers_j)
 
-            print(servers_i)
 
             # Jaccard similarity to be assigned as weight to the edge
             jac_sim = float(len(intersection)) / len(union)
@@ -120,6 +119,13 @@ for row in finalhashkeys_df.collect():
 partition = community.best_partition(G)
 clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partition.values())}
 print(clusters)
+
+# Open the logfile
+with open('../data/logfile.json', 'r') as r:
+    log = json.load(r)
+
+# Create the outputfile for part 2
+observationfile(part="2", group=clusters, logfile=log)
 
 # Create a deepcopy for experiment 2
 clusters_deepcopy = copy.deepcopy(clusters)

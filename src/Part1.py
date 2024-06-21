@@ -3,13 +3,13 @@ import pickle
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
-from pyspark.sql.types import ArrayType, IntegerType
+from pyspark.sql.types import ArrayType, IntegerType, DoubleType
 from pyspark.sql import functions as F
 import networkx as nx
 import community
 import json
-from filefunctions import stddev, observationfile, output
-from filefunctions import process_length, stddev
+from filefunctions import observationfile, output
+from filefunctions import process_length, stddev, reactiontime
 
 
 
@@ -50,18 +50,28 @@ branching_factor_bucket_udf = udf(branching_factor_bucket, IntegerType())
 
 # Hash 3: variance 1 and 2
 variance_udf = udf(stddev, IntegerType())
-info_df = info_df.withColumn(colName="variance", col=variance_udf(col("time_stamps")))
+reactiontime_udf = udf(reactiontime, ArrayType(IntegerType()))
+info_df = info_df.withColumn(colName="reactiontime", col=reactiontime_udf(col("time_stamps")))
+info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiontime")))
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 33
-bucket_size = int(stddev / bucket_factor)
+# print(f"std: {stddev}")
+#sum_std = info_df.agg({"variance": "sum"}).collect()[0][0]
+#count_std = info_df.count()
+#stdvar = sum_std / count_std
+#print(stdvar)
+bucket_factor = 5
+bucket_size = stddev / bucket_factor
+print(bucket_size)
+
+
 
 def variancehash_1(variance) -> int:
-    return variance // bucket_size + 1
+    return int(variance // bucket_size + 1)
 
 def variancehash_2(variance) -> int:
-    return (variance - bucket_size + 1) // bucket_size + 1
+    return int((variance - bucket_size + 1) // bucket_size + 1)
 
 variancehash_1_udf = udf(variancehash_1, IntegerType())
 variancehash_2_udf = udf(variancehash_2, IntegerType())

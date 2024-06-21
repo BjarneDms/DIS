@@ -8,9 +8,17 @@ def stddev(time_stamps) -> int:
     """Calculate the standard deviation of timestamps"""
     length = len(time_stamps)
     mean = sum(time_stamps) / length
-    var = sum((elem - mean) ** 2 for elem in time_stamps) / length
-    var = round(var, ndigits=2)
+    squared_dev = [(elem - mean) ** 2 for elem in time_stamps]
+    var = sum(squared_dev) / length
+    var = round(var, ndigits=0)
     return int(math.sqrt(var))
+
+def reactiontime(time_stamps) -> list:
+    sorted_time_stamps = sorted(time_stamps)
+    all_diff = []
+    for i in range(1,len(sorted_time_stamps)):
+        all_diff.append(int(sorted_time_stamps[i] - sorted_time_stamps[i-1]))
+    return all_diff
 
 # For process length -------------------------------------------------------------
 def process_length(from_servers) -> int:
