@@ -12,10 +12,6 @@ with open('log_experiments.pkl', 'rb') as f:
 with open('clusters1.pkl', 'rb') as f:
     clusters = pickle.load(f)
 
-print(clusters.items())
-for l in log_experiments:
-    print(l)
-
 # ------------------------------
 # Experiment 1
 
@@ -28,7 +24,6 @@ for bucket, process in candidate_pairs:
     grouped_pairs[bucket].append(process)
 # Till here
 
-
 def create_evaluation_pairs(grouped_pairs):
     evaluation_pairs = []
     for bucket, process in grouped_pairs.items():
@@ -40,6 +35,8 @@ def create_evaluation_pairs(grouped_pairs):
 
 
 comparisons = create_evaluation_pairs(grouped_pairs)
+
+print(comparisons)
 
 filtered_comparisons = [(min(a, b), max(a, b)) for a, b in comparisons]
 filtered_comparisons = [comp for comp in filtered_comparisons if len(comp) == 2]

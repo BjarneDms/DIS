@@ -1,3 +1,6 @@
+import copy
+import pickle
+
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
@@ -16,7 +19,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../test.json"
+json_file_path = "../data/logfile.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -181,6 +184,9 @@ cp_list = [list(pair) for pair in cp_set]
 with open("../data/candidate_pairs.json", 'w') as f:
     json.dump(cp_list, f)
 
+clusters_deepcopy = copy.deepcopy(clusters)
+with open('clusters1.pkl', 'wb') as f:
+    pickle.dump(clusters_deepcopy, f)
 
 # Stop the Spark session
 spark.stop()

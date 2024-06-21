@@ -71,7 +71,7 @@ all_info_df = df_prep.withColumn(colName="length_1", col=lengthhash_1_udf(col("p
 
 # Combine the length hashkeys with the variance hashkeys
 lv11_df = all_info_df.withColumn(colName="length1_variance1", col=F.concat_ws("_", col("length_1"), col("variance_1")))
-lv12_df =   all_info_df.withColumn(colName="length1_variance2", col=F.concat_ws("_", col("length_1"), col("variance_2")))
+lv12_df = all_info_df.withColumn(colName="length1_variance2", col=F.concat_ws("_", col("length_1"), col("variance_2")))
 lv21_df = all_info_df.withColumn(colName="length2_variance1", col=F.concat_ws("_", col("length_2"), col("variance_1")))
 lv22_df = all_info_df.withColumn(colName="length2_variance2", col=F.concat_ws("_", col("length_2"), col("variance_2")))
 
