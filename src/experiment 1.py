@@ -2,6 +2,7 @@ import pickle
 from collections import defaultdict
 from itertools import groupby
 import itertools
+import json
 
 with open('copied_network.pkl', 'rb') as f:
     network = pickle.load(f)
@@ -11,6 +12,9 @@ with open('log_experiments.pkl', 'rb') as f:
 
 with open('clusters1.pkl', 'rb') as f:
     clusters = pickle.load(f)
+
+for l in log_experiments:
+    print(l)
 
 # ------------------------------
 # Experiment 1
@@ -24,7 +28,7 @@ for bucket, process in candidate_pairs:
     grouped_pairs[bucket].append(process)
 # Till here
 
-with open("../data/length_branch_buckets", "r") as r:
+with open("../data/length_branch_buckets.json", "r") as r:
     length_branch_buckets = json.load(r)
 
 print(type(grouped_pairs))

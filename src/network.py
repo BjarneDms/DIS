@@ -9,16 +9,18 @@ import os
 import pickle
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1]                          # Branching factor is averagely 2
+branching_factor = [1,2]                          # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
-mean = 50                                       # Mean for timestamp generation
+mean = 200                                       # Mean for timestamp generation
 mean_start_node = 1000                          # Mean for timestamp generation of user
-std_dev = 20                                    # Std_deviation for timestamp generation
+log_mean = 10
+std_dev = 100                                   # Std_deviation for timestamp generation
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
+log_std_dev = 5
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 5)]       # How big the chance is that a node is the end node
+stop_condition = [i for i in range(1, 100)]       # How big the chance is that a node is the end node
 initial_branching = 2                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
@@ -30,7 +32,7 @@ sisters_nodes_names = []                        # List we need to update the pre
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(1, 12)]            # Chance of server failing
-amount_of_logs = 10                             # How many tasks were performed (one path from node zero to node zero)
+amount_of_logs = 100                             # How many tasks were performed (one path from node zero to node zero)
 chance_go_back_up = [i for i in range(1, 5)]  # Chance of a server calling more than one server
 log_length = 15
 # ----------------------------------------------------------------------------------------------------------------------
@@ -293,7 +295,6 @@ def make_path():
 #- can it go back to one that it has already been at through another route?
 #- impliment that it sometimes does not go all the way up again, you might need another boolean for this
 
-
 not_long_enough = True
 log = []
 #j = 0                                       #voor log lengte
@@ -307,23 +308,23 @@ for j in range(amount_of_logs):            #voor log proceses
         else:
             if not route[i+1][1]:
                 if route[i][0] == len(network):
-                    random_response_time = network[len(network)-1].request_time + np.random.normal(mean, std_dev)
+                    random_response_time = network[len(network)-1].request_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i + 1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
                     base_time += random_response_time
                 else:
-                    random_response_time = network[route[i][0]].request_time + np.random.normal(mean, std_dev)
+                    random_response_time = network[route[i][0]].request_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
                     base_time += random_response_time
             else:
                 if route[i][0] == len(network):
-                    random_response_time = network[len(network)-1].response_time + np.random.normal(mean, std_dev)
+                    random_response_time = network[len(network)-1].response_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i + 1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
                 else:
-                    random_response_time = network[route[i][0]].response_time + np.random.normal(mean, std_dev)
+                    random_response_time = network[route[i][0]].response_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
