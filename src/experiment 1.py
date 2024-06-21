@@ -13,6 +13,9 @@ with open('log_experiments.pkl', 'rb') as f:
 with open('clusters1.pkl', 'rb') as f:
     clusters = pickle.load(f)
 
+for l in log_experiments:
+    print(l)
+
 # ------------------------------
 # Experiment 1
 with open("../data/length_branch_buckets.json", "r") as r:
