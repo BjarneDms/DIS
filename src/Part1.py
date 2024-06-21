@@ -54,7 +54,7 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("time_stam
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 20
+bucket_factor = 33
 bucket_size = int(stddev / bucket_factor)
 
 def variancehash_1(variance) -> int:

@@ -9,7 +9,7 @@ import os
 import pickle
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1,2]                          # Branching factor is averagely 2
+branching_factor = [1,2,3,4]                          # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
@@ -24,9 +24,9 @@ stop_condition = [i for i in range(1, 100)]       # How big the chance is that a
 initial_branching = 2                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
-chance_dup_nodes = [i for i in range(1, 4)]         # The chance of getting duplicate nodes
-chance_sisters_nodes = [i for i in range(1, 9)]     # The chance of getting sister nodes
-chance_random_link = [i for i in range(1, 5)]       # Chance of getting a random link from a higher node going down
+chance_dup_nodes = [i for i in range(1, 6)]         # The chance of getting duplicate nodes
+chance_sisters_nodes = [i for i in range(1, 6)]     # The chance of getting sister nodes
+chance_random_link = [i for i in range(1, 8)]       # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
