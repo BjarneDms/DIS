@@ -172,17 +172,16 @@ with open("../data/part1Output.json", 'w') as f:
 observationfile(part="1", group=clusters, logfile=log)
 
 # Create list of candidate pairs for experiment 1
-cp_set = set()
+cp_dict = {}
 collected_data = exp_bucket_to_ids_df.collect()
+key = 0
 for row in collected_data:
     ids = row['process_ids']
     if len(ids)>1:
-        for i in range(len(ids)):
-            for j in range(i + 1, len(ids)):
-                cp_set.add((ids[i], ids[j]))
-cp_list = [list(pair) for pair in cp_set]
-with open("../data/candidate_pairs.json", 'w') as f:
-    json.dump(cp_list, f)
+        cp_dict[key] = ids
+        key += 1
+with open("../data/length_branch_buckets.json", 'w') as f:
+    json.dump(cp_dict, f)
 
 clusters_deepcopy = copy.deepcopy(clusters)
 with open('clusters1.pkl', 'wb') as f:
