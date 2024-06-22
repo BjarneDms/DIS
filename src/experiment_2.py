@@ -14,7 +14,7 @@ servers_per_process = {i: -1 for i in range(len(log_experiments))}
 process = 0
 for l in log_experiments:
     if l[4] != process:
-        process += 1
+        process = l[4]
     if servers_per_process[process] == -1:
         servers_per_process[process] = [l[1]]
     else:
