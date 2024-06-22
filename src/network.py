@@ -20,7 +20,7 @@ std_dev = 40                                   # Std_deviation for timestamp gen
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 log_std_dev = 0
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 10)]       # How big the chance is that a node is the end node
+stop_condition = [i for i in range(1, 2)]       # How big the chance is that a node is the end node
 initial_branching = 2                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
@@ -301,7 +301,7 @@ log = []
 for j in range(amount_of_logs):            #voor log proceses
 #while not_long_enough:                      #voor log lengte
     route = make_path()
-    base_time = 0 #abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
+    base_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
     for i in range(len(route)-1):
         if i == 0:
             log.append(("S0", f"S{route[1][0]}", base_time, "Request", j))
