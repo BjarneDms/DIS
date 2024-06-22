@@ -62,7 +62,7 @@ stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
 #count_std = info_df.count()
 #stdvar = sum_std / count_std
 #print(stdvar)
-bucket_factor = 0.0000005
+bucket_factor = 1
 bucket_size = stddev / bucket_factor
 print(bucket_size)
 
@@ -119,7 +119,7 @@ info_df.show(truncate=False)
 In this section we make a dictionary with the groups that should be merged
 assuming transitivity
 """
-jac_treshold = 0.5
+jac_treshold = 0.8
 '''
 merge_dict = {}
 info_collected = info_df.collect()
