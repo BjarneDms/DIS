@@ -92,10 +92,16 @@ all_part1_merges = [(min(a, b), max(a, b)) for a, b in all_part1_merges]
 def jaccard_similarity(set1, set2):
     intersection = set1.intersection(set2)
     union = set1.union(set2)
-    return len(intersection) / len(union) if len(union) > 0 else 0
+    return len(intersection) / len(union) if len(union) > 0 else 1
 
-print(all_merges)
-print(all_part1_merges)
+new_all_merges = [(min(a, b), max(a, b)) for a, b in all_merges]
+new_all_part1_merges = [(min(a, b), max(a, b)) for a, b in all_part1_merges]
+
+new_all_merges = sorted(new_all_merges, key=lambda x: (x[0], x[1]))
+new_all_part1_merges = sorted(new_all_part1_merges, key=lambda x: (x[0], x[1]))
+
+print(new_all_merges)
+print(new_all_part1_merges)
 
 print(jaccard_similarity(all_merges, all_part1_merges))
 

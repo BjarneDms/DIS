@@ -55,7 +55,7 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("time_stam
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 20
+bucket_factor = 1
 bucket_size = int(stddev / bucket_factor)
 
 def variancehash_1(variance) -> int:
@@ -111,7 +111,7 @@ info_df.show(truncate=False)
 In this section we make a dictionary with the groups that should be merged
 assuming transitivity
 """
-jac_treshold = 0.5
+jac_treshold = 0.8
 '''
 merge_dict = {}
 info_collected = info_df.collect()
@@ -156,10 +156,18 @@ for row in bucket_to_ids_df.collect():
             counter_i = Counter(servers_i)
             counter_j = Counter(servers_j)
 
+            #intersection = counter_i.intersection(counter_j)
+            #union = counter_i.union(counter_j)
+            #jac_sim = len(intersection) / len(union) if len(union) > 0 else 0
+
             intersection_count = sum((counter_i & counter_j).values())
-            union_count = sum((counter_i | counter_j).values())
-            jac_sim = float(intersection_count) / union_count
-            if jac_sim > jac_treshold and G.has_edge(process_id_1, process_id_2) == False:
+            union_count = sum((counter_i | counter_j).values())             # - intersection_count
+            if union_count > 0:
+                jac_sim = float(intersection_count) / union_count
+            else:
+                jac_sim = 1
+
+            if jac_sim > jac_treshold and not G.has_edge(process_id_1, process_id_2):
                 G.add_edge(process_id_1, process_id_2)
 
 merge_lists = list(nx.connected_components(G))

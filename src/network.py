@@ -20,7 +20,7 @@ std_dev = 40                                   # Std_deviation for timestamp gen
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 log_std_dev = 5
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 500)]       # How big the chance is that a node is the end node
+stop_condition = [i for i in range(1, 20)]       # How big the chance is that a node is the end node
 initial_branching = 2                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
@@ -32,8 +32,8 @@ sisters_nodes_names = []                        # List we need to update the pre
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(1, 12)]            # Chance of server failing
-amount_of_logs = 200                             # How many tasks were performed (one path from node zero to node zero)
-chance_go_back_up = [i for i in range(1, 5)]  # Chance of a server calling more than one server
+amount_of_logs = 20                             # How many tasks were performed (one path from node zero to node zero)
+chance_go_back_up = [i for i in range(2, 100)]  # Chance of a server calling more than one server
 log_length = 15
 # ----------------------------------------------------------------------------------------------------------------------
 
