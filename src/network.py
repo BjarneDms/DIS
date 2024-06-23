@@ -313,7 +313,7 @@ for j in range(amount_of_logs):            #voor log proceses
                                 abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
                     base_time += random_response_time
                 else:
-                    random_response_time = network[route[i][0]].request_time + np.random.normal(log_mean, log_std_dev)
+                    random_response_time = network[route[i][0] - 1].request_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Request", j))
                     base_time += random_response_time
@@ -324,10 +324,11 @@ for j in range(amount_of_logs):            #voor log proceses
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
                 else:
-                    random_response_time = network[route[i][0]].response_time + np.random.normal(log_mean, log_std_dev)
+                    random_response_time = network[route[i][0] - 1].response_time + np.random.normal(log_mean, log_std_dev)
                     log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
+    print(f'{j}: {route}')
 
     # voor log lengte
     # -------
@@ -341,7 +342,12 @@ for j in range(amount_of_logs):            #voor log proceses
 for l in log:
     print(l)
 
+for n in network:
+    print(n)
+
 final_sorted_log = sorted(log, key=lambda x: x[2])
+
+print(route)
 
 #for l in final_sorted_log:
     #print(l)
