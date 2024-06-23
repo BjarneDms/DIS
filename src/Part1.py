@@ -8,8 +8,6 @@ from pyspark.sql import functions as F
 import networkx as nx
 import community
 import json
-from filefunctions import observationfile, output
-from filefunctions import process_length, stddev
 from collections import Counter
 from filefunctions import observationfile, output
 from filefunctions import process_length, stddev, reactiontime
@@ -59,12 +57,7 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiont
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-# print(f"std: {stddev}")
-#sum_std = info_df.agg({"variance": "sum"}).collect()[0][0]
-#count_std = info_df.count()
-#stdvar = sum_std / count_std
-#print(stdvar)
-bucket_factor = 5
+bucket_factor = 1
 bucket_size = stddev / bucket_factor
 print(bucket_size)
 
@@ -90,7 +83,7 @@ info_df = info_df.withColumn("variance1_bucket", variancehash_1_udf(col("varianc
 info_df = info_df.withColumn("variance2_bucket", variancehash_2_udf(col("variance")))
 
 # Combine buckets into a column
-combined_bucket_df = info_df.withColumn("combined_bucket1",
+combined_bucket_df = info_df.withColumn("combined_buckets",
     F.concat_ws("_",  col("process_length_bucket"),
     col("branching_factor_bucket"), col("variance1_bucket")))
 combined_bucket_df = combined_bucket_df.withColumn("combined_bucket2",
@@ -103,7 +96,7 @@ exp_bucket_df = info_df.withColumn("exp_bucket",
     col("branching_factor_bucket"))).select("ID", "exp_bucket")
 
 # Group and combine by the 2 combined buckets and collect the IDs
-bucket1_to_ids_df = combined_bucket_df.groupBy("combined_bucket1").agg(
+bucket1_to_ids_df = combined_bucket_df.groupBy("combined_buckets").agg(
     collect_list("ID").alias("process_ids"))
 bucket2_to_ids_df = combined_bucket_df.groupBy("combined_bucket2").agg(
     collect_list("ID").alias("process_ids"))

@@ -9,31 +9,31 @@ import os
 import pickle
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1,2,3,4,6,5,7]                          # Branching factor is averagely 2
+branching_factor = [1,2,3,4,5]                          # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
 mean = 200                                       # Mean for timestamp generation
 mean_start_node = 1000                          # Mean for timestamp generation of user
 log_mean = 10
-std_dev = 40                                   # Std_deviation for timestamp generation
+std_dev = 50                                   # Std_deviation for timestamp generation
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
 log_std_dev = 5
 network = []                                    # List of all the servers
 stop_condition = [i for i in range(1, 20)]       # How big the chance is that a node is the end node
-initial_branching = 2                           # How many options the user has (how many server paths exist)
+initial_branching = 5                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
-chance_dup_nodes = [i for i in range(1, 6)]         # The chance of getting duplicate nodes
-chance_sisters_nodes = [i for i in range(1, 6)]     # The chance of getting sister nodes
-chance_random_link = [i for i in range(1, 8)]       # Chance of getting a random link from a higher node going down
+chance_dup_nodes = [i for i in range(1, 20)]         # The chance of getting duplicate nodes
+chance_sisters_nodes = [i for i in range(1, 20)]     # The chance of getting sister nodes
+chance_random_link = [i for i in range(1, 40)]       # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
-stop_log = [i for i in range(1, 12)]            # Chance of server failing
+stop_log = [i for i in range(1, 30)]            # Chance of server failing
 amount_of_logs = 20                             # How many tasks were performed (one path from node zero to node zero)
-chance_go_back_up = [i for i in range(2, 100)]  # Chance of a server calling more than one server
+chance_go_back_up = [i for i in range(1, 30)]  # Chance of a server calling more than one server
 log_length = 15
 # ----------------------------------------------------------------------------------------------------------------------
 

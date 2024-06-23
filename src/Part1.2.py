@@ -57,14 +57,9 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiont
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-# print(f"std: {stddev}")
-#sum_std = info_df.agg({"variance": "sum"}).collect()[0][0]
-#count_std = info_df.count()
-#stdvar = sum_std / count_std
-#print(stdvar)
-bucket_factor = 0.0000005
-bucket_size = stddev / bucket_factor
-print(bucket_size)
+bucket_factor = 0.5
+bucket_size = int(stddev / bucket_factor)
+print(f'bucket size: {bucket_size}')
 
 def variancehash_1(variance) -> int:
     return int(variance // bucket_size + 1)
@@ -86,12 +81,12 @@ info_df = info_df.withColumn("variance1_bucket", variancehash_1_udf(col("varianc
 info_df = info_df.withColumn("variance2_bucket", variancehash_2_udf(col("variance")))
 
 # Combine buckets into a column
-combined_bucket_df = info_df.withColumn("combined_bucket1",
+combined_bucket_df = info_df.withColumn("combined_buckets",
     F.concat_ws("_",  col("process_length_bucket"),
     col("branching_factor_bucket"), col("variance1_bucket")))
 combined_bucket_df = combined_bucket_df.withColumn("combined_bucket2",
     F.concat_ws("_",  col("process_length_bucket"),
-    col("branching_factor_bucket"), col("variance2_bucket"))).select("ID", "combined_bucket1", "combined_bucket2")
+    col("branching_factor_bucket"), col("variance2_bucket"))).select("ID", "combined_buckets", "combined_bucket2")
 
 # Combine buckets without variance, used in experiment 1
 exp_bucket_df = info_df.withColumn("exp_bucket",
@@ -99,7 +94,7 @@ exp_bucket_df = info_df.withColumn("exp_bucket",
     col("branching_factor_bucket"))).select("ID", "exp_bucket")
 
 # Group and combine by the 2 combined buckets and collect the IDs
-bucket1_to_ids_df = combined_bucket_df.groupBy("combined_bucket1").agg(
+bucket1_to_ids_df = combined_bucket_df.groupBy("combined_buckets").agg(
     collect_list("ID").alias("process_ids"))
 bucket2_to_ids_df = combined_bucket_df.groupBy("combined_bucket2").agg(
     collect_list("ID").alias("process_ids"))
@@ -116,35 +111,9 @@ info_df.show(truncate=False)
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
-In this section we make a dictionary with the groups that should be merged
-assuming transitivity
+In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.5
-'''
-merge_dict = {}
-info_collected = info_df.collect()
-for row in info_collected:
-    id = row['ID']
-    merge_dict[id] = []
-buckets_collected = bucket_to_ids_df.collect()
-for bucket in buckets_collected:
-    ids = bucket['process_ids']
-    for i in range(len(ids)):
-        for j in range(i+1, len(ids)):
-            if ids[j] not in merge_dict[ids[i]]:
-                servers_i = info_df.filter(col("ID") == ids[i]).select("to_servers").collect()[0]['to_servers']
-                servers_j = info_df.filter(col("ID") == ids[j]).select("to_servers").collect()[0]['to_servers']
-                counter_i = Counter(servers_i)
-                counter_j = Counter(servers_j)
-
-                intersection_count = sum((counter_i & counter_j).values())
-                union_count = sum((counter_i | counter_j).values())
-                jac_sim = float(intersection_count) / union_count
-
-                if jac_sim > jac_treshold:
-                    merge_dict[ids[i]].append(ids[j])
-'''
-
+jac_treshold = 0.6
 
 # Create a graph
 G = nx.Graph()
@@ -175,7 +144,7 @@ for row in bucket_to_ids_df.collect():
             else:
                 jac_sim = 1
 
-            if jac_sim > jac_treshold and not G.has_edge(process_id_1, process_id_2):
+            if jac_sim >= jac_treshold and not G.has_edge(process_id_1, process_id_2):
                 G.add_edge(process_id_1, process_id_2)
 
 merge_lists = list(nx.connected_components(G))
@@ -184,6 +153,7 @@ key = 0
 for merge_list in merge_lists:
     clusters[key] = list(merge_list)
     key += 1
+clusters = dict(sorted(clusters.items(), key=lambda item: item[1][0]))
 print(clusters)
 #-----------------------------------------------------------------------------------------------------------------------------#
 """

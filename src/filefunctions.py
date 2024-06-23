@@ -45,6 +45,6 @@ def output(group:dict, logfile:list):
                 if elem in first_processes:
                     for log in logfile:
                         if log.get('ID') == elem:
-                            f.write(f"<{','.join(map(str, list(log.values())[:-1])) + ',' + str(i)}> \n")
+                            f.write(f"<{','.join(map(str, list(log.values())[:-1])) + ',' + str(elem)}> \n")
             i += 1
 

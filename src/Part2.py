@@ -7,7 +7,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
-from filefunctions import process_length, stddev, observationfile
+from filefunctions import process_length, stddev, observationfile, reactiontime
+from collections import Counter
 
 # Create a spark session
 spark = SparkSession.builder \
@@ -29,34 +30,37 @@ grouped_df = df.groupBy("ID").agg(
 # Create the process length and variance functions from filefunctions
 length_udf = udf(process_length, IntegerType())
 variance_udf = udf(stddev, IntegerType())
+reactiontime_udf = udf(reactiontime, ArrayType(IntegerType()))
 
 # Add their columns
-df_prep = grouped_df.withColumn(colName="process_length", col=length_udf(col("from_servers"))) \
-    .withColumn(colName="variance", col=variance_udf(col("time_stamps")))
+df_prep = grouped_df.withColumn(colName="process_length", col=length_udf(col("from_servers")))
+df_prep = df_prep.withColumn(colName="reactiontime", col=reactiontime_udf(col("time_stamps")))
+df_prep = df_prep.withColumn(colName="variance", col=variance_udf(col("reactiontime")))
 
 # Determine the size of the buckets for length
 stddev_l = df_prep.select(stddev_spark("process_length")).collect()[0][0]
-bucket_factor_l = 1
+bucket_factor_l = 0.5
 bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
-
+print(f'bucket size for length: {bucket_size_l}')
 
 def lengthhash_1(length) -> int:
     return (length//bucket_size_l) + 1
 
 def lengthhash_2(length):
-    return ((length - ((bucket_size_l + 1)) // bucket_size_l) + 1)
+    return ((length - bucket_size_l + 1) // bucket_size_l) + 1
 
 # Determine the size of the buckets for variance
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor_var = 1
+bucket_factor_var = 0.3
 bucket_size_var = int(stddev_var/bucket_factor_var)
+print(f'bucket size for variance: {bucket_size_var}')
 
 
 def variancehash_1(variance) -> int:
     return (variance // (bucket_size_var) + 1)
 
 def variancehash_2(variance) -> int:
-    return ((variance - ((bucket_size_var + 1)) // bucket_size_var) + 1)
+    return (variance - ((bucket_size_var + 1) // bucket_size_var) + 1)
 
 # Create the hash functions
 lengthhash_1_udf = udf(lengthhash_1, IntegerType())
@@ -64,7 +68,7 @@ lengthhash_2_udf = udf(lengthhash_2, IntegerType())
 variancehash_1_udf = udf(variancehash_1, IntegerType())
 variancehash_2_udf = udf(variancehash_2, IntegerType())
 
-# Hash the new columns and add they bucket keys as columns
+# Hash the new columns and add their bucket keys as columns
 all_info_df = df_prep.withColumn(colName="length_1", col=lengthhash_1_udf(col("process_length"))) \
     .withColumn(colName="length_2", col=lengthhash_2_udf(col("process_length"))) \
     .withColumn(colName="variance_1", col=variancehash_1_udf(col("variance"))) \
@@ -90,9 +94,18 @@ inter1_df = hashkeys11_df.union(hashkeys12_df).distinct()
 inter2_df = inter1_df.union(hashkeys21_df).distinct()
 finalhashkeys_df = inter2_df.union(hashkeys22_df).distinct()
 finalhashkeys_df.show()
-# Create a graph with Jaccard similarity as edge weigths
+all_info_df.show(truncate=False)
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------------#
+"""
+In this section a graph will be created with edges between all similar processes
+"""
+jac_treshold = 0.7
+
+# Create a graph
 G = nx.Graph()
 
+# Add nodes and edges to the graph
 for row in finalhashkeys_df.collect():
     process_ids = row['group_IDs']
     for i in range(len(process_ids)):
@@ -104,20 +117,29 @@ for row in finalhashkeys_df.collect():
 
             servers_i = all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
             servers_j = all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
-            union = set(servers_i) | set(servers_j)
-            intersection = set(servers_i) & set(servers_j)
+            counter_i = Counter(servers_i)
+            counter_j = Counter(servers_j)
 
+            #intersection = counter_i.intersection(counter_j)
+            #union = counter_i.union(counter_j)
+            #jac_sim = len(intersection) / len(union) if len(union) > 0 else 0
 
-            # Jaccard similarity to be assigned as weight to the edge
-            jac_sim = float(len(intersection)) / len(union)
-            if G.has_edge(process_id_1, process_id_2):
-                ()
+            intersection_count = sum((counter_i & counter_j).values())
+            union_count = sum((counter_i | counter_j).values())             # - intersection_count
+            if union_count > 0:
+                jac_sim = float(intersection_count) / union_count
             else:
-                G.add_edge(process_id_1, process_id_2, weight=jac_sim)
+                jac_sim = 1
 
-# Create cluster using Louvain algorithm as community detection algorithm
-partition = community.best_partition(G)
-clusters = {v: [k for k, v2 in partition.items() if v2 == v] for v in set(partition.values())}
+            if jac_sim >= jac_treshold and not G.has_edge(process_id_1, process_id_2):
+                G.add_edge(process_id_1, process_id_2)
+
+merge_lists = list(nx.connected_components(G))
+clusters = dict()
+key = 0
+for merge_list in merge_lists:
+    clusters[key] = list(merge_list)
+    key += 1
 print(clusters)
 
 # Open the logfile
@@ -131,5 +153,9 @@ observationfile(part="2", group=clusters, logfile=log)
 clusters_deepcopy = copy.deepcopy(clusters)
 with open('clusters2.pkl', 'wb') as f:
     pickle.dump(clusters_deepcopy, f)
-
+'''
+# Create pkl for experiment 2
+with open('../data/part1Output.json', 'r') as r:
+    log_merged = 
+'''
 spark.stop()
