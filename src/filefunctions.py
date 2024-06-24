@@ -48,3 +48,13 @@ def output(group:dict, logfile:list):
                             f.write(f"<{','.join(map(str, list(log.values())[:-1])) + ',' + str(elem)}> \n")
             i += 1
 
+def jaccard_similarity(set1, set2):
+    intersection = set1.intersection(set2)
+    union = set1.union(set2)
+    return len(intersection) / len(union) if len(union) > 0 else 0
+
+def jaccard_similarity_counter(set1, set2):
+    intersection = set1 & set2
+    union = set1 | set2
+    return sum(intersection.values()) / sum(union.values()) if len(union) > 0 else 1
+

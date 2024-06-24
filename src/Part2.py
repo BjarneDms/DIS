@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, collect_list, udf, stddev as stddev_spark
 from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
-from filefunctions import process_length, stddev, observationfile, reactiontime
+from filefunctions import process_length, stddev, observationfile, reactiontime, jaccard_similarity
 from collections import Counter
 
 # Create a spark session
@@ -44,23 +44,23 @@ bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
 print(f'bucket size for length: {bucket_size_l}')
 
 def lengthhash_1(length) -> int:
-    return (length//bucket_size_l) + 1
+    return int(length // bucket_size_l + 1)
 
 def lengthhash_2(length):
-    return ((length - bucket_size_l + 1) // bucket_size_l) + 1
+    return int((length - (bucket_size_l/2)) // bucket_size_l + 1)
 
 # Determine the size of the buckets for variance
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor_var = 0.3
+bucket_factor_var = 0.5
 bucket_size_var = int(stddev_var/bucket_factor_var)
 print(f'bucket size for variance: {bucket_size_var}')
 
 
 def variancehash_1(variance) -> int:
-    return (variance // (bucket_size_var) + 1)
+    return int(variance // bucket_size_var + 1)
 
 def variancehash_2(variance) -> int:
-    return (variance - ((bucket_size_var + 1) // bucket_size_var) + 1)
+    return int((variance - (bucket_size_var/2)) // bucket_size_var + 1)
 
 # Create the hash functions
 lengthhash_1_udf = udf(lengthhash_1, IntegerType())
@@ -93,14 +93,14 @@ hashkeys22_df = lv22_df.groupBy("length2_variance2") \
 inter1_df = hashkeys11_df.union(hashkeys12_df).distinct()
 inter2_df = inter1_df.union(hashkeys21_df).distinct()
 finalhashkeys_df = inter2_df.union(hashkeys22_df).distinct()
-finalhashkeys_df.show()
-all_info_df.show(truncate=False)
+finalhashkeys_df.show(truncate = False, n = 1000)
+all_info_df.orderBy('ID').show(truncate=False, n=1000)
 
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
 In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.7
+jac_treshold = 0.4
 
 # Create a graph
 G = nx.Graph()
@@ -115,22 +115,12 @@ for row in finalhashkeys_df.collect():
             process_id_2 = process_ids[j]
             G.add_node(process_id_2)
 
-            servers_i = all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
-            servers_j = all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
+            servers_i = set(all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers'])
+            servers_j = set(all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers'])
             counter_i = Counter(servers_i)
             counter_j = Counter(servers_j)
 
-            #intersection = counter_i.intersection(counter_j)
-            #union = counter_i.union(counter_j)
-            #jac_sim = len(intersection) / len(union) if len(union) > 0 else 0
-
-            intersection_count = sum((counter_i & counter_j).values())
-            union_count = sum((counter_i | counter_j).values())             # - intersection_count
-            if union_count > 0:
-                jac_sim = float(intersection_count) / union_count
-            else:
-                jac_sim = 1
-
+            jac_sim = jaccard_similarity(servers_i, servers_j)
             if jac_sim >= jac_treshold and not G.has_edge(process_id_1, process_id_2):
                 G.add_edge(process_id_1, process_id_2)
 
