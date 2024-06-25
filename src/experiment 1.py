@@ -103,6 +103,6 @@ new_all_part1_merges = sorted(new_all_part1_merges, key=lambda x: (x[0], x[1]))
 print(new_all_merges)
 print(new_all_part1_merges)
 
-print(jaccard_similarity(all_merges, all_part1_merges))
+print(jaccard_similarity(set(new_all_merges), set(new_all_part1_merges)))
 
 #splitten in missed en fout gegroepeerd

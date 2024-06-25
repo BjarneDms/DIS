@@ -5,7 +5,7 @@ from itertools import groupby
 import re
 from filefunctions import jaccard_similarity
 
-jac_treshold = 0.4
+jac_treshold = 0.5
 
 with open('../data/part1Output.txt', 'r') as f:
     log_experiments = f.readlines()
@@ -47,11 +47,19 @@ for key in clusters.items():
         for combination in combinations:
             all_part2_merges.add(combination)
 
-all_part2_merges = [(min(a, b), max(a, b)) for a, b in all_part2_merges]
+new_all_merges = [(min(a, b), max(a, b)) for a, b in to_merge]
+new_all_part2_merges = [(min(a, b), max(a, b)) for a, b in all_part2_merges]
 
-print(to_merge)
-print(all_part2_merges)
-print(jaccard_similarity(to_merge, all_part2_merges))
+new_all_merges = sorted(new_all_merges, key=lambda x: (x[0], x[1]))
+new_all_part2_merges = sorted(new_all_part2_merges, key=lambda x: (x[0], x[1]))
+
+intersection = set(new_all_merges).intersection(set(new_all_part2_merges))
+proportion = len(intersection)/len(new_all_merges)
+print(proportion)
+
+print(new_all_merges)
+print(sorted(intersection, key=lambda x: (x[0], x[1])))
+
 
 
 

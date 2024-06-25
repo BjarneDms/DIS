@@ -111,7 +111,7 @@ info_df.orderBy('ID').show(n = 1000, truncate=False)
 """
 In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.5
+jac_treshold = 0.6
 
 # Create a graph
 G = nx.Graph()

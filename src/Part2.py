@@ -51,7 +51,7 @@ def lengthhash_2(length):
 
 # Determine the size of the buckets for variance
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor_var = 0.5
+bucket_factor_var = 1
 bucket_size_var = int(stddev_var/bucket_factor_var)
 print(f'bucket size for variance: {bucket_size_var}')
 
@@ -100,7 +100,7 @@ all_info_df.orderBy('ID').show(truncate=False, n=1000)
 """
 In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.4
+jac_treshold = 0.5
 
 # Create a graph
 G = nx.Graph()
