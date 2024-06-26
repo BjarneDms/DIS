@@ -9,9 +9,10 @@ import json
 from filefunctions import observationfile, output, process_length, stddev, reactiontime, jaccard_similarity_counter
 from collections import Counter
 import networkx as nx
+import time
 
 
-
+start_time = time.time()
 
 # Create a Spark session
 spark = SparkSession.builder \
@@ -56,7 +57,7 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiont
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 2           #The higher the more buckets
+bucket_factor = 1000           #The higher the more buckets
 bucket_size = stddev / bucket_factor
 print(f'bucket size: {bucket_size}')
 
@@ -107,34 +108,40 @@ exp_bucket_to_ids_df = exp_bucket_df.groupBy("exp_bucket").agg(
 bucket_to_ids_df.show(n = 1000, truncate=False)
 info_df.orderBy('ID').show(n = 1000, truncate=False)
 
+pause_time = time.time() - start_time
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
 In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.6
+jac_treshold = 0.5
 
 # Create a graph
 G = nx.Graph()
 
+bucket_to_ids = bucket_to_ids_df.collect()
+info_df_collected = info_df.select("ID", "to_servers").collect()
+id_to_servers = {row["ID"]: row["to_servers"] for row in info_df_collected}
+
 # Add nodes and edges to the graph
-for row in bucket_to_ids_df.collect():
+for row in bucket_to_ids:
     process_ids = row['process_ids']
     for i in range(len(process_ids)):
         process_id_1 = process_ids[i]
         G.add_node(process_id_1)
+        servers_i = id_to_servers[process_id_1]
+        counter_i = Counter(servers_i)
         for j in range(i + 1, len(process_ids)):
             process_id_2 = process_ids[j]
             G.add_node(process_id_2)
-
-            servers_i = info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers']
-            servers_j = info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers']
-            counter_i = Counter(servers_i)
+            servers_j = id_to_servers[process_id_2]
             counter_j = Counter(servers_j)
 
             jac_sim = jaccard_similarity_counter(counter_i, counter_j)
 
             if jac_sim >= jac_treshold and not G.has_edge(process_id_1, process_id_2):
                 G.add_edge(process_id_1, process_id_2)
+
+resume_time = time.time()
 
 merge_lists = list(nx.connected_components(G))
 clusters = dict()
@@ -143,12 +150,11 @@ for merge_list in merge_lists:
     clusters[key] = list(merge_list)
     key += 1
 clusters = dict(sorted(clusters.items(), key=lambda item: item[1][0]))
-print(clusters)
+#print(clusters)
 #-----------------------------------------------------------------------------------------------------------------------------#
 """
 Next we write the output and observation files
 """
-
 # # Write the results to the output & observation file
 # Open the logfile
 with open('../data/logfile.json', 'r') as r:
@@ -188,5 +194,12 @@ clusters_deepcopy = copy.deepcopy(clusters)
 with open('clusters1.pkl', 'wb') as f:
     pickle.dump(clusters_deepcopy, f)
 
+time_with_graph = time.time() - start_time
+time_without_graph = pause_time + time.time() - resume_time
+
+print()
+
+print(f'Time without graph: {round(time_without_graph, 2)}')
+print(f'Time with graph: {round(time_with_graph, 2)}')
 # Stop the Spark session
 spark.stop()

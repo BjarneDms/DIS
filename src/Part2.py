@@ -9,6 +9,9 @@ from pyspark.sql.types import ArrayType, IntegerType
 from pyspark.sql import functions as F
 from filefunctions import process_length, stddev, observationfile, reactiontime, jaccard_similarity
 from collections import Counter
+import time
+
+start_time = time.time()
 
 # Create a spark session
 spark = SparkSession.builder \
@@ -41,7 +44,7 @@ df_prep = df_prep.withColumn(colName="variance", col=variance_udf(col("reactiont
 stddev_l = df_prep.select(stddev_spark("process_length")).collect()[0][0]
 bucket_factor_l = 0.5
 bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
-print(f'bucket size for length: {bucket_size_l}')
+#print(f'bucket size for length: {bucket_size_l}')
 
 def lengthhash_1(length) -> int:
     return int(length // bucket_size_l + 1)
@@ -51,9 +54,9 @@ def lengthhash_2(length):
 
 # Determine the size of the buckets for variance
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor_var = 1
+bucket_factor_var = 0.5
 bucket_size_var = int(stddev_var/bucket_factor_var)
-print(f'bucket size for variance: {bucket_size_var}')
+#print(f'bucket size for variance: {bucket_size_var}')
 
 
 def variancehash_1(variance) -> int:
@@ -93,9 +96,10 @@ hashkeys22_df = lv22_df.groupBy("length2_variance2") \
 inter1_df = hashkeys11_df.union(hashkeys12_df).distinct()
 inter2_df = inter1_df.union(hashkeys21_df).distinct()
 finalhashkeys_df = inter2_df.union(hashkeys22_df).distinct()
-finalhashkeys_df.show(truncate = False, n = 1000)
-all_info_df.orderBy('ID').show(truncate=False, n=1000)
+#finalhashkeys_df.show(truncate = False, n = 1000)
+#all_info_df.orderBy('ID').show(truncate=False, n=1000)
 
+pause_time = time.time() - start_time
 #----------------------------------------------------------------------------------------------------------------------------------------------------------#
 """
 In this section a graph will be created with edges between all similar processes
@@ -105,24 +109,30 @@ jac_treshold = 0.5
 # Create a graph
 G = nx.Graph()
 
+finalhashkeys = finalhashkeys_df.collect()
+all_info = all_info_df.select("ID", "to_servers").collect()
+id_to_servers = {row["ID"]: row["to_servers"] for row in all_info}
+
+
 # Add nodes and edges to the graph
-for row in finalhashkeys_df.collect():
+for row in finalhashkeys:
     process_ids = row['group_IDs']
     for i in range(len(process_ids)):
         process_id_1 = process_ids[i]
+        servers_i = set(id_to_servers[process_id_1])
+        counter_i = Counter(servers_i)
         G.add_node(process_id_1)
         for j in range(i + 1, len(process_ids)):
             process_id_2 = process_ids[j]
             G.add_node(process_id_2)
-
-            servers_i = set(all_info_df.filter(col("ID") == process_id_1).select("to_servers").collect()[0]['to_servers'])
-            servers_j = set(all_info_df.filter(col("ID") == process_id_2).select("to_servers").collect()[0]['to_servers'])
-            counter_i = Counter(servers_i)
+            servers_j = set(id_to_servers[process_id_2])
             counter_j = Counter(servers_j)
 
             jac_sim = jaccard_similarity(servers_i, servers_j)
             if jac_sim >= jac_treshold and not G.has_edge(process_id_1, process_id_2):
                 G.add_edge(process_id_1, process_id_2)
+
+resume_time = time.time()
 
 merge_lists = list(nx.connected_components(G))
 clusters = dict()
@@ -130,7 +140,7 @@ key = 0
 for merge_list in merge_lists:
     clusters[key] = list(merge_list)
     key += 1
-print(clusters)
+#print(clusters)
 
 # Open the logfile
 with open('../data/logfile.json', 'r') as r:
@@ -143,9 +153,12 @@ observationfile(part="2", group=clusters, logfile=log)
 clusters_deepcopy = copy.deepcopy(clusters)
 with open('clusters2.pkl', 'wb') as f:
     pickle.dump(clusters_deepcopy, f)
-'''
-# Create pkl for experiment 2
-with open('../data/part1Output.json', 'r') as r:
-    log_merged = 
-'''
+
+time_with_graph = time.time() - start_time
+time_without_graph = pause_time + time.time() - resume_time
+
+print(f'Time without graph: {round(time_without_graph, 2)}')
+print(f'Time with graph: {round(time_with_graph, 2)}')
+
 spark.stop()
+

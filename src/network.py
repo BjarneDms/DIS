@@ -9,7 +9,7 @@ import os
 import pickle
 
 # ----------------------------------------------------------------------------------------------------------------------
-branching_factor = [1,2,3,4,5]              # Branching factor is averagely 2
+branching_factor = [6, 7, 8, 9, 10]              # Branching factor is averagely 2
 to_append_nodes = []                            # List of nodes that still need to get a child node
 dup_nodes = []                                  # Temporary list that keeps track of the duplicate nodes
 sisters_nodes = []                              # Temporary list that keeps track of the sister nodes
@@ -18,23 +18,24 @@ mean_start_node = 1000                          # Mean for timestamp generation 
 log_mean = 0
 std_dev = 250                                   # Std_deviation for timestamp generation
 std_dev_start_node = 300                        # Std_deviation for timestamp generation of user
-log_std_dev = 25
+log_std_dev = 0
 network = []                                    # List of all the servers
-stop_condition = [i for i in range(1, 12)]       # How big the chance is that a node is the end node
-initial_branching = 5                           # How many options the user has (how many server paths exist)
+stop_condition = [i for i in range(1, 500)]       # How big the chance is that a node is the end node
+initial_branching = 20                           # How many options the user has (how many server paths exist)
 amount_of_dup = [i for i in range(2, 4)]            # How many duplicates can exist
 amount_of_sisters = [i for i in range(2, 4)]        # How many sister nodes can exist
 chance_dup_nodes = [i for i in range(1, 5)]         # The chance of getting duplicate nodes
-chance_sisters_nodes = [i for i in range(1, 3)]     # The chance of getting sister nodes
-chance_random_link = [i for i in range(1, 10)]       # Chance of getting a random link from a higher node going down
+chance_sisters_nodes = [i for i in range(1, 5)]     # The chance of getting sister nodes
+chance_random_link = [i for i in range(1, 20)]       # Chance of getting a random link from a higher node going down
 dup_nodes_names = []                            # List we need to update the pred of the children of the dup nodes
 sisters_nodes_names = []                        # List we need to update the pred of the children of the sister nodes
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
-stop_log = [i for i in range(1, 100)]            # Chance of server failing
-amount_of_logs = 50                             # How many tasks were performed (one path from node zero to node zero)
+stop_log = [i for i in range(2, 100)]            # Chance of server failing
+amount_of_logs = 1500                             # How many tasks were performed (one path from node zero to node zero)
 chance_go_back_up = [i for i in range(1, 5)]  # Chance of a server calling more than one server
-log_length = 15
+log_length = 10000
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Function responsible for
@@ -229,7 +230,7 @@ def visualisation(network_list):
     plt.show()
 
 
-visualisation(network)
+#visualisation(network)
 
 #copying network for other experiment
 copied_network = copy.deepcopy(network)
@@ -297,9 +298,9 @@ def make_path():
 
 not_long_enough = True
 log = []
-#j = 0                                       #voor log lengte
-for j in range(amount_of_logs):            #voor log proceses
-#while not_long_enough:                      #voor log lengte
+j = 0                                       #voor log lengte
+#for j in range(amount_of_logs):            #voor log proceses
+while not_long_enough:                      #voor log lengte
     route = make_path()
     base_time = abs(round(np.random.normal(mean_start_node, std_dev_start_node), ndigits=2))
     for i in range(len(route)-1):
@@ -328,26 +329,17 @@ for j in range(amount_of_logs):            #voor log proceses
                     log.append((f"S{route[i][0]}", f"S{route[i+1][0]}",
                                 abs(round(base_time + random_response_time, ndigits=2)), "Response", j))
                     base_time += random_response_time
-    print(f'{j}: {route}')
 
     # voor log lengte
     # -------
-    """
+
     j += 1
-    if len(log) > log_length:
+    if len(log) >= log_length:
         not_long_enough = False
-    """
+
     # -------
 
-for l in log:
-    print(l)
-
-for n in network:
-    print(n)
-
 final_sorted_log = sorted(log, key=lambda x: x[2])
-
-print(route)
 
 #for l in final_sorted_log:
     #print(l)
