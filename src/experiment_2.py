@@ -30,7 +30,7 @@ for l in log_experiments:
 print(servers_per_process)
 processes = list(servers_per_process.keys())
 combinations = list(itertools.combinations(processes, 2))
-print(combinations)
+#print(combinations)
 
 to_merge = set()
 for combination in combinations:
@@ -56,6 +56,7 @@ new_all_part2_merges = sorted(new_all_part2_merges, key=lambda x: (x[0], x[1]))
 
 intersection = set(new_all_merges).intersection(set(new_all_part2_merges))
 proportion = len(intersection)/len(new_all_merges)
+print(intersection)
 print(round(proportion,2))
 
 

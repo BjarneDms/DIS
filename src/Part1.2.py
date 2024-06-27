@@ -57,7 +57,7 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiont
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 1000           #The higher the more buckets
+bucket_factor = 1.5           #The higher the more buckets
 bucket_size = stddev / bucket_factor
 print(f'bucket size: {bucket_size}')
 
@@ -113,7 +113,7 @@ pause_time = time.time() - start_time
 """
 In this section a graph will be created with edges between all similar processes
 """
-jac_treshold = 0.5
+jac_treshold = 0.6
 
 # Create a graph
 G = nx.Graph()

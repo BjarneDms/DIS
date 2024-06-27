@@ -44,7 +44,7 @@ df_prep = df_prep.withColumn(colName="variance", col=variance_udf(col("reactiont
 stddev_l = df_prep.select(stddev_spark("process_length")).collect()[0][0]
 bucket_factor_l = 0.5
 bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
-#print(f'bucket size for length: {bucket_size_l}')
+print(f'bucket size for length: {bucket_size_l}')
 
 def lengthhash_1(length) -> int:
     return int(length // bucket_size_l + 1)
@@ -56,7 +56,7 @@ def lengthhash_2(length):
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
 bucket_factor_var = 0.5
 bucket_size_var = int(stddev_var/bucket_factor_var)
-#print(f'bucket size for variance: {bucket_size_var}')
+print(f'bucket size for variance: {bucket_size_var}')
 
 
 def variancehash_1(variance) -> int:
