@@ -27,10 +27,9 @@ for l in log_experiments:
             servers_per_process[proc] = [server_to]
         else:
             servers_per_process[proc].append(server_to)
-print(servers_per_process)
+# print(servers_per_process)
 processes = list(servers_per_process.keys())
 combinations = list(itertools.combinations(processes, 2))
-#print(combinations)
 
 to_merge = set()
 for combination in combinations:
@@ -42,7 +41,6 @@ for combination in combinations:
 
 all_part2_merges = set()
 for key in clusters.items():
-    print(key)
     if len(key[1]) > 1:
         combinations = list(itertools.combinations(key[1], 2))
         for combination in combinations:
@@ -56,8 +54,9 @@ new_all_part2_merges = sorted(new_all_part2_merges, key=lambda x: (x[0], x[1]))
 
 intersection = set(new_all_merges).intersection(set(new_all_part2_merges))
 proportion = len(intersection)/len(new_all_merges)
-print(intersection)
-print(round(proportion,2))
+# print(intersection)
+
+print(f'The proportion is: {round(proportion,2)}')
 
 
 
