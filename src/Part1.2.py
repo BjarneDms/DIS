@@ -32,13 +32,15 @@ info_df = df.groupBy("ID").agg(
     collect_list(col("time_stamp")).alias("time_stamps"),
     collect_list(col("type")).alias("types")
 )
-#Hash Functions
-#Hash 1: Total length (Unique server mentions)
+
+# Hash Functions
+# Hash 1: Total length (Unique server mentions)
 def assign_process_length_bucket(from_servers:ArrayType) -> int:
     return process_length(from_servers)
 assign_process_length_bucket_udf = udf(assign_process_length_bucket, IntegerType())
 
-#Hash 2: Branching factor
+
+# Hash 2: Branching factor
 def branching_factor_bucket(types:ArrayType) -> int:
     branching_factor = 0
     for i in range(len(types)):
@@ -47,6 +49,8 @@ def branching_factor_bucket(types:ArrayType) -> int:
             v = 1
         branching_factor += i*v
     return branching_factor
+
+
 branching_factor_bucket_udf = udf(branching_factor_bucket, IntegerType())
 
 # Hash 3: variance 1 and 2
@@ -57,15 +61,18 @@ info_df = info_df.withColumn(colName="variance", col=variance_udf(col("reactiont
 
 # Determine the size of the buckets
 stddev = info_df.select(stddev_spark("variance")).collect()[0][0]
-bucket_factor = 1.5           #The higher the more buckets
+bucket_factor = 1.5                                                 # The higher the more buckets
 bucket_size = stddev / bucket_factor
 print(f'bucket size: {bucket_size}')
+
 
 def variancehash_1(variance) -> int:
     return int(variance // bucket_size + 1)
 
+
 def variancehash_2(variance) -> int:
     return int((variance - (bucket_size/2)) // bucket_size + 1)
+
 
 variancehash_1_udf = udf(variancehash_1, IntegerType())
 variancehash_2_udf = udf(variancehash_2, IntegerType())
@@ -73,10 +80,10 @@ variancehash_2_udf = udf(variancehash_2, IntegerType())
 # Apply Hash 1:
 info_df = info_df.withColumn("process_length_bucket", assign_process_length_bucket_udf(col("from_servers")))
 
-#Apply Hash 2:
+# Apply Hash 2:
 info_df = info_df.withColumn("branching_factor_bucket", branching_factor_bucket_udf(col("types")))
 
-#Apply Hash 3:
+# Apply Hash 3:
 info_df = info_df.withColumn("variance1_bucket", variancehash_1_udf(col("variance")))
 info_df = info_df.withColumn("variance2_bucket", variancehash_2_udf(col("variance")))
 
@@ -109,7 +116,7 @@ bucket_to_ids_df.show(n = 1000, truncate=False)
 info_df.orderBy('ID').show(n = 1000, truncate=False)
 
 pause_time = time.time() - start_time
-#----------------------------------------------------------------------------------------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------------------------------------------------
 """
 In this section a graph will be created with edges between all similar processes
 """
@@ -150,8 +157,8 @@ for merge_list in merge_lists:
     clusters[key] = list(merge_list)
     key += 1
 clusters = dict(sorted(clusters.items(), key=lambda item: item[1][0]))
-#print(clusters)
-#-----------------------------------------------------------------------------------------------------------------------------#
+
+# -------------------------------------------------------------------------------------------------------------------
 """
 Next we write the output and observation files
 """
