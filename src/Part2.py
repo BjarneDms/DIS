@@ -19,7 +19,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the filepath
-filepath = "../data/part1Output.json"
+filepath = "../part1Output.json"
 
 # Create a dataframe of part1output.json
 df = spark.read.option(key='multiline', value=True).json(filepath)
@@ -143,7 +143,7 @@ for merge_list in merge_lists:
 #print(clusters)
 
 # Open the logfile
-with open('../data/logfile.json', 'r') as r:
+with open('../logfile.json', 'r') as r:
     log = json.load(r)
 
 # Create the outputfile for part 2

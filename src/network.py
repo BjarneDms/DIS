@@ -32,7 +32,7 @@ sisters_nodes_names = []                        # List we need to update the pre
 end_nodes = []                                  # List of nodes that do not have children
 nr_servers = 1                                  # int that keeps track of number of servers
 stop_log = [i for i in range(2, 100)]            # Chance of server failing
-amount_of_logs = 10000                           # How many tasks were performed (one path from node zero to node zero)
+amount_of_logs = 50000                           # How many tasks were performed (one path from node zero to node zero)
 chance_go_back_up = [i for i in range(1, 5)]  # Chance of a server calling more than one server
 log_length = 10000
 
@@ -371,11 +371,11 @@ formatted_data = [
 json_data = json.dumps(formatted_data, indent=4)
 
 # Step 3: Write the serialized function to a JSON file
-with open("../data/logfile.json", "w") as json_file:
+with open("../logfile.json", "w") as json_file:
     json_file.write(json_data)
 
 # Write the logfile as a .txt file
-with open("../data/logfile.txt", 'w') as f:
+with open("../logfile.txt", 'w') as f:
     for log in formatted_data:
         f.write(f"<{','.join(map(str, list(log.values())))}> \n")
 

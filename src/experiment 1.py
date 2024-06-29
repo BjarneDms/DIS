@@ -13,12 +13,12 @@ with open('log_experiments.pkl', 'rb') as f:
 with open('clusters1.pkl', 'rb') as f:
     clusters = pickle.load(f)
 
-for l in log_experiments:
-    print(l)
+#for l in log_experiments:
+    #print(l)
 
 # ------------------------------
 # Experiment 1
-with open("../data/length_branch_buckets.json", "r") as r:
+with open("../length_branch_buckets.json", "r") as r:
     length_branch_buckets = json.load(r)
 
 def create_evaluation_pairs(grouped_pairs):
@@ -100,8 +100,8 @@ new_all_part1_merges = [(min(a, b), max(a, b)) for a, b in all_part1_merges]
 new_all_merges = sorted(new_all_merges, key=lambda x: (x[0], x[1]))
 new_all_part1_merges = sorted(new_all_part1_merges, key=lambda x: (x[0], x[1]))
 
-print(new_all_merges)
-print(new_all_part1_merges)
+#print(new_all_merges)
+#print(new_all_part1_merges)
 
 print(round(jaccard_similarity(set(new_all_merges), set(new_all_part1_merges)), 2))
 

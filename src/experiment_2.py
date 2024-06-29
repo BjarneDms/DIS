@@ -7,7 +7,7 @@ from filefunctions import jaccard_similarity
 
 jac_treshold = 0.5
 
-with open('../data/part1Output.txt', 'r') as f:
+with open('../part1Output.txt', 'r') as f:
     log_experiments = f.readlines()
 
 with open('clusters2.pkl', 'rb') as f:

@@ -27,7 +27,7 @@ def process_length(from_servers) -> int:
 
 # Output file functions ------------------------------------------------------
 def observationfile(part:str, group:dict, logfile:list):
-    with open(f'../data/part{part}Observations.txt', 'w') as f:
+    with open(f'../part{part}Observations.txt', 'w') as f:
         for key, value in group.items():
             f.write(f"Group:{{{','.join(map(str, value))}}} \n")
             for elem in value:
@@ -37,7 +37,7 @@ def observationfile(part:str, group:dict, logfile:list):
                         f.write(f"<{','.join(map(str, log.values()))}> \n")
 
 def output(group:dict, logfile:list):
-    with open('../data/part1Output.txt', 'w') as f:
+    with open('../part1Output.txt', 'w') as f:
         i = 1
         first_processes = set(value[0] for value in group.values())
         for key, value in group.items():

@@ -20,7 +20,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 # Define the path to the JSON file
-json_file_path = "../data/logfile.json"
+json_file_path = "../logfile.json"
 
 # Read the JSON file into a DataFrame, specifying the schema
 df = spark.read.option('multiline', True).json(json_file_path)
@@ -157,7 +157,7 @@ Next we write the output and observation files
 """
 # # Write the results to the output & observation file
 # Open the logfile
-with open('../data/logfile.json', 'r') as r:
+with open('../logfile.json', 'r') as r:
     log = json.load(r)
 
 # Write output to .txt
@@ -165,14 +165,14 @@ output(group=clusters, logfile=log)
 
 # And to .json for further analysis
 formatted_data = []
-with open("../data/part1Output.txt", 'r') as r:
+with open("../part1Output.txt", 'r') as r:
     for line in r:
         strip = line.strip()
         clean = strip.replace('<', '').replace('>', '').split(",")
         call = {f"from_servers": clean[0], f"to_servers": clean[1], f"time_stamp": float(clean[2]), f"type": clean[3], f"ID": int(clean[4])}
         formatted_data.append(call)
 
-with open("../data/part1Output.json", 'w') as f:
+with open("../part1Output.json", 'w') as f:
     json.dump(formatted_data, f, indent=4)
 
 # Write observations to .txt
@@ -187,7 +187,7 @@ for row in collected_data:
     if len(ids)>1:
         cp_dict[key] = ids
         key += 1
-with open("../data/length_branch_buckets.json", 'w') as f:
+with open("../length_branch_buckets.json", 'w') as f:
     json.dump(cp_dict, f)
 
 clusters_deepcopy = copy.deepcopy(clusters)
