@@ -46,11 +46,14 @@ bucket_factor_l = 0.5
 bucket_size_l = max(int(stddev_l / bucket_factor_l), 1)
 print(f'bucket size for length: {bucket_size_l}')
 
+
 def lengthhash_1(length) -> int:
     return int(length // bucket_size_l + 1)
 
+
 def lengthhash_2(length):
     return int((length - (bucket_size_l/2)) // bucket_size_l + 1)
+
 
 # Determine the size of the buckets for variance
 stddev_var = df_prep.select(stddev_spark("variance")).collect()[0][0]
@@ -62,8 +65,10 @@ print(f'bucket size for variance: {bucket_size_var}')
 def variancehash_1(variance) -> int:
     return int(variance // bucket_size_var + 1)
 
+
 def variancehash_2(variance) -> int:
     return int((variance - (bucket_size_var/2)) // bucket_size_var + 1)
+
 
 # Create the hash functions
 lengthhash_1_udf = udf(lengthhash_1, IntegerType())
@@ -96,11 +101,10 @@ hashkeys22_df = lv22_df.groupBy("length2_variance2") \
 inter1_df = hashkeys11_df.union(hashkeys12_df).distinct()
 inter2_df = inter1_df.union(hashkeys21_df).distinct()
 finalhashkeys_df = inter2_df.union(hashkeys22_df).distinct()
-#finalhashkeys_df.show(truncate = False, n = 1000)
-#all_info_df.orderBy('ID').show(truncate=False, n=1000)
+
 
 pause_time = time.time() - start_time
-#----------------------------------------------------------------------------------------------------------------------------------------------------------#
+# --------------------------------------------------------------------------------------------------------------------
 """
 In this section a graph will be created with edges between all similar processes
 """
@@ -140,7 +144,6 @@ key = 0
 for merge_list in merge_lists:
     clusters[key] = list(merge_list)
     key += 1
-#print(clusters)
 
 # Open the logfile
 with open('../logfile.json', 'r') as r:
