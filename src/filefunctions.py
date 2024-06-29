@@ -3,7 +3,9 @@
 import math
 
 # Analysis functions:
-# For Variance -------------------------------------------------------------
+# For Variance ------------------------------------------------------------
+
+
 def stddev(time_stamps) -> int:
     """Calculate the standard deviation of timestamps"""
     length = len(time_stamps)
@@ -13,12 +15,14 @@ def stddev(time_stamps) -> int:
     var = round(var, ndigits=0)
     return int(math.sqrt(var))
 
+
 def reactiontime(time_stamps) -> list:
     sorted_time_stamps = sorted(time_stamps)
     all_diff = []
     for i in range(1,len(sorted_time_stamps)):
         all_diff.append(int(sorted_time_stamps[i] - sorted_time_stamps[i-1]))
     return all_diff
+
 
 # For process length -------------------------------------------------------------
 def process_length(from_servers) -> int:
@@ -48,10 +52,12 @@ def output(group:dict, logfile:list):
                             f.write(f"<{','.join(map(str, list(log.values())[:-1])) + ',' + str(elem)}> \n")
             i += 1
 
+
 def jaccard_similarity(set1, set2):
     intersection = set1.intersection(set2)
     union = set1.union(set2)
     return len(intersection) / len(union) if len(union) > 0 else 0
+
 
 def jaccard_similarity_counter(set1, set2):
     intersection = set1 & set2
